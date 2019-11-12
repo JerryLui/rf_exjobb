@@ -73,8 +73,6 @@ class ElasticQuery(object):
 
         :param start_time: datetime to start search at
         :param window_time: time window size of search
-        :param save_data: file path to save data
-
         :return: dataframe containing data in the time window if any
         """
         # Time parameters
