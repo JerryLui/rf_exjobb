@@ -1,12 +1,14 @@
 """
 Download data from Elastic Search server.
-Requires: settings.py with username and password parameters
+Requires: settings.py with server, username and password parameters
+
+@Author Jerry Liu jerry.liu@recordedfuture.com
 """
 import sys  # Used for local imports
 
 sys.path.append("/home/jerry/Dropbox/Kurser/Master Thesis/rf_exjobb/scripts")  # Configure
 
-from settings import username, password  # Import from settings.py
+from settings import username, password, server, index  # Import from settings.py
 from elasticsearch import Elasticsearch, exceptions
 from datetime import datetime, timedelta
 
@@ -15,6 +17,7 @@ import numpy as np
 
 import logging
 import os
+
 
 # Configuration parameters
 fp_log = 'elastic_query.log'  # Configure
@@ -35,17 +38,17 @@ ul_logger.propagate = False
 
 
 class ElasticQuery(object):
-    def __init__(self, server='http://localhost:9200', index='elastiflow*'):
+    def __init__(self, server_address, index, username, password):
         """
         ElasticQuery object for querying dataframes from server
 
-        :param server: es server addr
+        :param server_address: es server addr
         :param index: es index on server
         """
         self.index = index
         try:
             logger.debug('Initializing connection.')
-            self.client = Elasticsearch(server, http_auth=(username, password), timeout=30000)
+            self.client = Elasticsearch(server_address, http_auth=(username, password), timeout=30000)
             self.client.info()
         except exceptions.AuthenticationException as e:
             logger.error('Client Authorization Failed.')
@@ -57,7 +60,7 @@ class ElasticQuery(object):
 
         :param start_time: datetime to start search at
         :param window_time: time window size of search
-        :param save_data: save parsed data to file
+        :param save_data: file name to save data
 
         :return: dataframe containing data in the time window
         """
@@ -92,7 +95,7 @@ class ElasticQuery(object):
                            {'range':
                                 {'@timestamp':
                                      {'gte': time_current.isoformat(),
-                                      'lte': (time_current + time_change).isoformat()}
+                                      'lt': (time_current + time_change).isoformat()}
                                  }
                             }
                        }
@@ -139,5 +142,7 @@ class ElasticQuery(object):
 
 
 if __name__ == '__main__':
-    eq = ElasticQuery()
-    df = eq.query_time(datetime(2019, 9, 2, 9, 0))
+    eq = ElasticQuery(server, index, username, password)
+    # df = eq.query_time(datetime(2019, 9, 2, 9, 0))
+    df = eq.query_time(datetime(2019, 10, 28, 9, 0))
+
