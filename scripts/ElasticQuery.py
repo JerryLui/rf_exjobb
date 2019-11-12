@@ -6,7 +6,7 @@ Requires: settings.py with server, username and password parameters
 """
 import sys  # Used for local imports
 
-sys.path.append("/home/jerry/Dropbox/Kurser/Master Thesis/rf_exjobb/scripts")  # Configure
+sys.path.append("/home/jliu/rf_exjobb/scripts/")  # Configure
 
 from settings import username, password, server, index  # Import from settings.py
 from elasticsearch import Elasticsearch, exceptions
