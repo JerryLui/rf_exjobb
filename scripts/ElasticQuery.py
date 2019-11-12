@@ -26,7 +26,6 @@ logging.basicConfig(filename=fp_log,
                     datefmt='%m/%d/%Y %H:%M:%S',
                     level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-# logger.propagate = False
 
 es_logger = logging.getLogger('elasticsearch')
 es_logger.propagate = False
@@ -37,6 +36,12 @@ ul_logger.propagate = False
 
 class ElasticQuery(object):
     def __init__(self, server='http://localhost:9200', index='elastiflow*'):
+        """
+        ElasticQuery object for querying dataframes from server
+
+        :param server: es server addr
+        :param index: es index on server
+        """
         self.index = index
         try:
             logger.debug('Initializing connection.')
