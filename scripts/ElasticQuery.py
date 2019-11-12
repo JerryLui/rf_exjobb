@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 
 es_logger = logging.getLogger('elasticsearch')
 es_logger.propagate = False
-
 ul_logger = logging.getLogger('urllib3.connectionpool')
 ul_logger.propagate = False
 
@@ -51,11 +50,11 @@ class ElasticQuery(object):
 
         try:
             logger.debug('Initializing connection.')
-            self.client = Elasticsearch(self.es_server, http_auth=(username, password), timeout=30000)
-            self.client.info()
+            self.client = Elasticsearch(self.es_server, http_auth=(username, password), timeout=600)
         except exceptions.AuthenticationException as e:
             logger.error('Client Authorization Failed.')
             raise e
+        logger.debug('Connection established.')
 
         # Columns of interest
         self.col_flow = ['src_addr', 'src_port', 'dst_addr', 'dst_port', 'ip_protocol', 'packets', 'bytes']
@@ -97,15 +96,17 @@ class ElasticQuery(object):
              }
 
         logger.debug('Querying time %s' % time_current.isoformat())
-        return self._run_query(query)
+        return self._query_data(query)
 
-    def _run_query(self, query):
+    def _query_data(self, query):
         """
         Queries ElasticSearch server with given query body, saves result to file if a path is given
 
         :param query: query body given to elastic search
         :return: results as a dataframe
         """
+        df_tmp = pd.DataFrame(columns=self.columns)
+
         response = self.client.search(index=self.es_index,
                                       body=query,
                                       size=self.QUERY_SIZE,
@@ -114,12 +115,11 @@ class ElasticQuery(object):
         scroll_id = response['_scroll_id']
         n_flows = response['hits']['total']['value']
         if n_flows == 0:
-            raise exceptions.NotFoundError()
+            logger.debug('No entries found.\n%s' % response)
+            return df_tmp
 
         # Process batches
         logger.debug('Processing %i flows.' % n_flows)
-
-        df_tmp = pd.DataFrame(columns=self.columns)
 
         response_batch = 1
         while True:
@@ -145,7 +145,11 @@ class ElasticQuery(object):
 
 
 if __name__ == '__main__':
+    import time
+
+    start_time = time.time()
     eq = ElasticQuery(server, index, username, password)
     df = eq.query_time(datetime(2019, 9, 2, 9, 0))
-    # df = eq.query_time(datetime(2019, 10, 28, 9, 0))
+    time_elapsed = time.time() - start_time
+    print('Time Elapsed %.2f' % time_elapsed)
 
