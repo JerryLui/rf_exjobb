@@ -4,19 +4,10 @@ Requires: settings.py with server, username and password parameters
 
 @Author Jerry Liu jerry.liu@recordedfuture.com
 """
-import sys  # Used for local imports
-
-sys.path.append("/home/jliu/rf_exjobb/scripts/")  # Configure
-
-from settings import username, password, server, index  # Import from settings.py
-from elasticsearch import Elasticsearch, exceptions
 from datetime import datetime, timedelta
-
+from elasticsearch import Elasticsearch, exceptions
 import pandas as pd
-import numpy as np
-
 import logging
-import os
 
 
 # Configuration parameters
@@ -144,6 +135,10 @@ class ElasticQuery(object):
 
 if __name__ == '__main__':
     import time
+    import sys  # Used for local imports
+
+    sys.path.append("/home/jliu/rf_exjobb/scripts/")  # Configure
+    from settings import *
 
     start_time = time.time()
     eq = ElasticQuery(server, index, username, password)
