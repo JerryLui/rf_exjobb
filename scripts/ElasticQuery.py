@@ -2,10 +2,11 @@
 Download data from Elastic Search server.
 Requires: settings.py with username and password parameters
 """
-import sys                                  # Used for local imports
-sys.path.append("/home/jerry/Dropbox/Kurser/Master Thesis/rf_exjobb/scripts")   # Configure
+import sys  # Used for local imports
 
-from settings import username, password     # Import from settings.py
+sys.path.append("/home/jerry/Dropbox/Kurser/Master Thesis/rf_exjobb/scripts")  # Configure
+
+from settings import username, password  # Import from settings.py
 from elasticsearch import Elasticsearch, exceptions
 from datetime import datetime, timedelta
 
@@ -16,7 +17,7 @@ import logging
 import os
 
 # Configuration parameters
-fp_log = 'elastic_query.log'                    # Configure
+fp_log = 'elastic_query.log'  # Configure
 
 # Logging initialization
 logging.basicConfig(filename=fp_log,
@@ -25,13 +26,20 @@ logging.basicConfig(filename=fp_log,
                     datefmt='%m/%d/%Y %H:%M:%S',
                     level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+# logger.propagate = False
+
+es_logger = logging.getLogger('elasticsearch')
+es_logger.propagate = False
+
+ul_logger = logging.getLogger('urllib3.connectionpool')
+ul_logger.propagate = False
 
 
 class ElasticQuery(object):
     def __init__(self, server='http://localhost:9200', index='elastiflow*'):
         self.index = index
         try:
-            logger.info('Initializing connection.')
+            logger.debug('Initializing connection.')
             self.client = Elasticsearch(server, http_auth=(username, password), timeout=30000)
             self.client.info()
         except exceptions.AuthenticationException as e:
@@ -54,7 +62,7 @@ class ElasticQuery(object):
 
         # save_file parameters
         if save_data:
-            data_folder = os.getcwd()       # Configure
+            data_folder = os.getcwd()  # Configure
             fp_data = os.path.join(data_folder, save_data)
 
         # Time parameters
@@ -86,7 +94,7 @@ class ElasticQuery(object):
                   }
              }
 
-        logger.info('Querying time %s' % time_current.isoformat())
+        logger.debug('Querying time %s' % time_current.isoformat())
         response = self.client.search(index=query_index,
                                       body=query_filter,
                                       size=query_size,
@@ -96,7 +104,7 @@ class ElasticQuery(object):
         scroll_id = response['_scroll_id']
 
         # Process batches
-        logger.info('Processing %i flows.' % response['hits']['total']['value'])
+        logger.debug('Processing %i flows.' % response['hits']['total']['value'])
 
         response_batch = 1
         df_tmp = pd.DataFrame(columns=columns)
@@ -112,7 +120,7 @@ class ElasticQuery(object):
 
             # Exit condition
             if len(response['hits']['hits']) < query_size:
-                logger.info('Processed %i batches.' % response_batch)
+                logger.debug('Processed %i batches.' % response_batch)
                 break
 
             # Get next set
@@ -128,4 +136,3 @@ class ElasticQuery(object):
 if __name__ == '__main__':
     eq = ElasticQuery()
     df = eq.query_time(datetime(2019, 9, 2, 9, 0))
-
