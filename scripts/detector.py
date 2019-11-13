@@ -33,14 +33,19 @@ class DetectorPool():
     the final detections.
     '''
 
-    def __init__():
-        pass
+    def __init__(self):
+        self.detectors = []
 
-    def add_detector():
-        pass
+    def add_detector(self, new_det):
+        self.detectors.append(new_det)
 
-    def next_timestep():
-        pass
+    def next_timestep(self, frame):
+        new_detections = []
+        for det in self.detectors:
+            new = det.run_next_timestep(frame)
+            new_detections.append(new)
+        print(new_detections) #<- or some version of this
+        
 
     def get_results():
         pass
@@ -68,7 +73,8 @@ class Detector():
         #Non-parameter initializations
         self.step = 0
         self.divs = np.zeros((len(self.features), self.n_seeds))
-        self.mav  = np.zeros((len(self.features, self.mav_steps))) #Use np.roll
+        #TODO: Some mav frame
+        self.mav  = np.zeros((len(self.features))) #Use np.roll
         self.last_histograms = None
 
         #Bool to signify if detector is ready for detection
@@ -114,9 +120,9 @@ class Detector():
             #Check number of detected seeds
 
         if step < self.mav_steps:
-            self.mav[f, step] = None
+            self.mav[f] = None
         else:
-            self.mav[f, step] = None
+            self.mav[f] = None
 
         step += 1
         self.last_histograms = histograms
