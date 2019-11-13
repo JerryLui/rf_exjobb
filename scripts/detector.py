@@ -37,20 +37,21 @@ class Detector():
     detection algorithm on the subset.
     '''
 
-    def __init__(self):
-        self.name         = None #Name used in logging
-        self.n_seeds      = 1    #Number of seeds for detector to use
-        self.n_bins       = 1    #Number of bins in histogram
-        self.mav_steps    = 1    #Number of steps to take for the moving average
-        self.features     = []   #Which features to run detection on
-        #self.aggregations = []   #Feature/aggregation should probably be a pair
-        self.filter       = None #Filter function to apply to data before detect
-        self.thresh       = 1    #KL Threshold for a detection
+    def __init__(self, name, n_seeds, n_bins,
+            mav_steps, features, filt, thresh):
+        self.name         = name      #Name used in logging
+        self.n_seeds      = n_seeds   #Number of seeds for detector to use
+        self.n_bins       = n_bins    #Number of bins in histogram
+        self.mav_steps    = mav_steps    #Number of steps to take for the moving average
+        self.features     = features  #Which features to run detection on
+        #self.aggregations = []       #Feature/aggregation should probably be a pair
+        self.filt         = filt      #Filter function to apply to data before detect
+        self.thresh       = thresh    #KL Threshold for a detection
 
         #Parameter-dependent initializations
         self.seeds = np.random.choice(100000, size=self.n_seeds, replace=False)
         self.bucket_limits = [i for i in range(2**32//self.n_bins, 2**32, 2**32//self.n_bins)]
-        self.triggers = self.n_seeds - 2 #How many triggers to include extracted
+        self.flag_th = self.n_seeds - 2 #How many flags to include extracted
 
         #Non-parameter initializations
         self.step = 0
@@ -72,11 +73,15 @@ class Detector():
         frame = self.applyfilter(frame)
 
         histograms = np.zeros((len(self.features), self.n_seeds, self.n_bins))
-        divs       = np.zeros((len(self.features), self.n_seeds)))
         bin_set    = [[[set() for _ in range(self.n_bins)]
                     for __ in range(self.n_seeds)] for ___ in self.features]
         flags      = [[[]
                     for __ in range(self.n_seeds)] for ___ in self.features]
+
+        trigger_feature = []
+        trigger_value   = []
+        trigger_number  = []
+        trigger_step    = []
 
         for f, feat in enumerate(self.features):
             #AGGREGATIONS ARE NOT IMPLEMENTED YET
@@ -103,7 +108,7 @@ class Detector():
             #What do we need?
             # - Mav array             -> rolling numpy array
             # - Last iteration's bins -> last_histograms
-            if self.step > 1
+            if self.step > 1:
                 for s, seed in enumerate(self.seeds):
                     last = np.copy(self.last_histograms[f, s, :])
                     current = np.copy(histograms[f, s, :])
@@ -119,10 +124,10 @@ class Detector():
             #Extraction must also be done on this level
 
             #Check number of detected seeds
-            n_triggers = sum([1 for s in flags[f] if s])
+            n_flags = sum([1 for s in flags[f] if s])
             total_dict = {}
-            if n_triggers >= self.triggers:
-                for s, seed n enumerate(self.seeds):
+            if n_flags >= self.flag_th:
+                for s, seed in enumerate(self.seeds):
                     flag_bins = flags[f][s]
                     for b in flag_bins:
                         bin_set_union = bin_set[f][s][b].union(
@@ -132,6 +137,12 @@ class Detector():
                                 total_dict[value] = 1
                             else:
                                 total_dict[value] += 1
+                for (k, v) in total_dict.items():
+                    if v >= self.flag_th:
+                        trigger_feature.append(feat)
+                        trigger_value.append(k)
+                        trigger_number.append(v)
+                        trigger_step.append(self.step)
 
             #Save to some results list ish
 
@@ -141,16 +152,22 @@ class Detector():
                 self.mav[f] = np.sum(self.divs[f, :, :]) / ((self.mav_steps + 1) * self.n_seeds)
                 self.operational = True
 
-
         self.divs = np.roll(self.divs, 1, axis=2)
 
         self.step += 1
         self.last_histograms = histograms
         self.last_bin_set    = bin_set
 
+        triggers = pd.DataFrame({'feature': trigger_feature,
+                         'value': trigger_value,
+                         'triggers': trigger_number,
+                         'timestep': trigger_step})
+
+        return triggers
+
     def applyfilter(self, frame):
-        if self.filter is None:
+        if self.filt is None:
             return frame
         else:
-            return self.filter(frame)
+            return self.filt(frame)
 
