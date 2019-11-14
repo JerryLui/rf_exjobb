@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from detector import Detector, DetectorPool
 
+
 def get_dummy_data():
     PATH = '~/Chalmers/Thesis/Query/batches/100_mil_7.csv'
     data = pd.read_csv(PATH, index_col=None, header=0)
@@ -10,6 +11,7 @@ def get_dummy_data():
     data['first_switched'] = pd.to_datetime(data.first_switched)
     data['last_switched'] = pd.to_datetime(data.last_switched)
     return data
+
 
 if __name__ == '__main__':
     dp = DetectorPool()
