@@ -4,8 +4,24 @@ Detects and extracts anomalies in input netflow data
 
 import pandas as pd
 import numpy as np
-from helper_functions import KL_divergence
+from helper_functions import KL_divergence, hash_to_buckets
 
+class Detection():
+    '''
+    Small wrapper for the information of a single detection.
+    A list of detections is returned by the detector(pool) for every iteration
+    '''
+
+    def __init__(self, detector, operational, feature, value, number, timestep):
+        self.detector    = detector
+        self.operational = operational
+        self.feature     = feature
+        self.value       = value
+        self.number      = number
+        self.timestep    = timestep
+
+    def __repr__(self):
+        return '\n%s:\t%s:\t%s:' % (self.detector, self.feature, self.value)
 
 class DetectorPool():
     '''
@@ -24,12 +40,24 @@ class DetectorPool():
         new_detections = []
         for det in self.detectors:
             new = det.run_next_timestep(frame)
-            new_detections.append(new)
+            for d in new:
+                new_detections.append(d)
         print(new_detections) #<- or some version of this
         
-
     def get_results():
         pass
+
+    def get_detector_divs(self):
+        divs = {}
+        for det in self.detectors:
+            divs[det.name] = det.get_divs()
+        return divs
+
+    def get_detector_mavs(self):
+        mavs = {}
+        for det in self.detectors:
+            mavs[det.name] = det.get_mav()
+        return mavs
 
 class Detector():
     '''
@@ -78,10 +106,12 @@ class Detector():
         flags      = [[[]
                     for __ in range(self.n_seeds)] for ___ in self.features]
 
-        trigger_feature = []
-        trigger_value   = []
-        trigger_number  = []
-        trigger_step    = []
+
+        detections = []
+        #trigger_feature = []
+        #trigger_value   = []
+        #trigger_number  = []
+        #trigger_step    = []
 
         for f, feat in enumerate(self.features):
             #AGGREGATIONS ARE NOT IMPLEMENTED YET
@@ -105,8 +135,6 @@ class Detector():
                     self.divs[f, s, 0] = div
 
             #Detection per seed, use mav method
-            #What do we need?
-            # - Mav array             -> rolling numpy array
             # - Last iteration's bins -> last_histograms
             if self.step > 1:
                 for s, seed in enumerate(self.seeds):
@@ -114,7 +142,7 @@ class Detector():
                     current = np.copy(histograms[f, s, :])
                     new_div = div
                     n = 0
-                    while (new_div - mav[f]) > self.thresh and n < self.n_bins:
+                    while (new_div - self.mav[f]) > self.thresh and n < self.n_bins:
                         b = np.argmax(np.abs(last - current))
                         flags[f][s].append(b) #Flag bin b
                         current[b] = last[b]
@@ -134,15 +162,20 @@ class Detector():
                                 self.last_bin_set[f][s][b])
                         for value in bin_set_union:
                             if value in total_dict.keys():
-                                total_dict[value] = 1
-                            else:
                                 total_dict[value] += 1
+                            else:
+                                total_dict[value] = 1
                 for (k, v) in total_dict.items():
                     if v >= self.flag_th:
-                        trigger_feature.append(feat)
-                        trigger_value.append(k)
-                        trigger_number.append(v)
-                        trigger_step.append(self.step)
+                        detection = Detection(
+                                detector=self.name,
+                                operational=self.operational,
+                                feature=feat,
+                                value=k,
+                                number=v,
+                                timestep=self.step
+                                )
+                        detections.append(detection)
 
             #Save to some results list ish
 
@@ -158,16 +191,27 @@ class Detector():
         self.last_histograms = histograms
         self.last_bin_set    = bin_set
 
-        triggers = pd.DataFrame({'feature': trigger_feature,
-                         'value': trigger_value,
-                         'triggers': trigger_number,
-                         'timestep': trigger_step})
-
-        return triggers
+        return detections
 
     def applyfilter(self, frame):
+        '''
+        Apply the filter function self.filt to an input dataframe
+        '''
         if self.filt is None:
             return frame
         else:
             return self.filt(frame)
+
+    def get_divs(self):
+        '''
+        Returns divs for plotting
+        The 1 index is needed, as roll happens at the end of every iteration
+        '''
+        return self.divs[:, :, 1]
+
+    def get_mav(self):
+        '''
+        Return the current moving average for plotting
+        '''
+        return self.mav
 
