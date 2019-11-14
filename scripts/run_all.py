@@ -18,8 +18,10 @@ logging.basicConfig(filename=fp_log,
                     datefmt='%m/%d/%Y %H:%M:%S',
                     level=logging.DEBUG)
 logger = logging.getLogger('rf_exjobb')
+
 es_logger = logging.getLogger('elasticsearch')
 es_logger.propagate = False
+
 ul_logger = logging.getLogger('urllib3.connectionpool')
 ul_logger.propagate = False
 
