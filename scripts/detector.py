@@ -9,10 +9,19 @@ from helper_functions import KL_divergence, hash_to_buckets
 class Detection():
     '''
     Small wrapper for the information of a single detection.
-    A list of detections is returned by the detector(pool) for every iteration
     '''
 
     def __init__(self, detector, operational, feature, value, number, timestep):
+        '''
+        Detection object corresponding to a single detection from one Detector
+
+        :param detector: Name of detector which found this value
+        :param operational: Bool whether the detector is in an operational state or not
+        :param feature: Which of the detectors aggregation features triggered a detection
+        :param value: The value of the triggered feature
+        :param number: The number of hash functions in which this value was contained in a flagged bin
+        :param timestep: How many steps the detector has processed
+        '''
         self.detector    = detector
         self.operational = operational
         self.feature     = feature
@@ -31,12 +40,26 @@ class DetectorPool():
     '''
 
     def __init__(self):
+        '''
+        DetectorPool is a thin wrapper for running multiple detectors on the same data
+        '''
         self.detectors = []
 
     def add_detector(self, new_det):
+        '''
+        Add a detector object to the pool
+
+        :param new_det: New detector object
+        '''
         self.detectors.append(new_det)
 
     def next_timestep(self, frame):
+        '''
+        Runs the next timestep. Every detector is fed the same dataframe, and all detections are returned in a list
+
+        :param frame: Pandas dataframe to feed into detectors
+        :return: Returns a list of Detection objects corresponding to all detections within that frame
+        '''
         new_detections = []
         for det in self.detectors:
             new = det.run_next_timestep(frame)
@@ -48,12 +71,22 @@ class DetectorPool():
         pass
 
     def get_detector_divs(self):
+        '''
+        Get the KL-divergences from the last timestep from every detector
+
+        :return: Dictionary keyed by detector name with numpy arrays of KL-divergence
+        '''
         divs = {}
         for det in self.detectors:
             divs[det.name] = det.get_divs()
         return divs
 
     def get_detector_mavs(self):
+        '''
+        Get the moving average of the KL-divergences from the last few (detector dependent) steps
+
+        :return: Dcitionary keyed by detector name with numpy arrays of moving averages
+        '''
         mavs = {}
         for det in self.detectors:
             mavs[det.name] = det.get_mav()
@@ -67,6 +100,17 @@ class Detector():
 
     def __init__(self, name, n_seeds, n_bins,
             mav_steps, features, filt, thresh):
+        '''
+        The Detector analyzes some feature using DESCRIPTION
+
+        :param name: Detector name
+        :param n_seeds: Number of unique hash functions to use in detector
+        :param n_bins: The number of possible outcomes of every hash function
+        :param mav_steps: Number of steps to calculate moving average of, to use for detection
+        :param features: List of features to aggregate and analyze
+        :param filt: Filter function which is applied to every datafram befor analysis
+        :param thresh: Threshold value for detection of KL-divergences compared to moving average 
+        '''
         self.name         = name      #Name used in logging
         self.n_seeds      = n_seeds   #Number of seeds for detector to use
         self.n_bins       = n_bins    #Number of bins in histogram
@@ -96,7 +140,10 @@ class Detector():
 
     def run_next_timestep(self, frame):
         '''
-        Consumes all new data in frame
+        Runs the given dataframe as the next timestep
+
+        :param frame: Pandas dataframe to analyze
+        :returns: List of Detection objects
         '''
         frame = self.applyfilter(frame)
 
@@ -192,6 +239,9 @@ class Detector():
     def applyfilter(self, frame):
         '''
         Apply the filter function self.filt to an input dataframe
+
+        :param frame: Frame to run through filter
+        :return: Filtered frame
         '''
         if self.filt is None:
             return frame
@@ -202,12 +252,16 @@ class Detector():
         '''
         Returns divs for plotting
         The 1 index is needed, as roll happens at the end of every iteration
+
+        :return: KL-divergences of last timestep
         '''
         return self.divs[:, :, 1]
 
     def get_mav(self):
         '''
         Return the current moving average for plotting
+
+        :return: Moving average of KL-divergence as of the last timestep
         '''
         return self.mav
 
