@@ -15,6 +15,7 @@ def get_dummy_data():
     data['last_switched'] = pd.to_datetime(data.last_switched)
     return data
 
+
 if __name__ == '__main__':
     dp = DetectorPool()
     

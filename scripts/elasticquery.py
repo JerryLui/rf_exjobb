@@ -10,21 +10,8 @@ import pandas as pd
 import logging
 
 
-# Configuration parameters
-fp_log = 'elastic_query.log'  # Configure
-
-# Logging initialization
-logging.basicConfig(filename=fp_log,
-                    filemode='a',
-                    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-                    datefmt='%m/%d/%Y %H:%M:%S',
-                    level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
-es_logger = logging.getLogger('elasticsearch')
-es_logger.propagate = False
-ul_logger = logging.getLogger('urllib3.connectionpool')
-ul_logger.propagate = False
+# Logging
+logger = logging.getLogger('rf_exjobb')
 
 
 class ElasticQuery(object):
@@ -139,6 +126,16 @@ if __name__ == '__main__':
 
     sys.path.append("/home/jliu/rf_exjobb/scripts/")  # Configure
     from settings import *
+
+    # Configuration parameters
+    fp_log = 'elastic_query.log'  # Configure
+
+    # Logging initialization
+    logging.basicConfig(filename=fp_log,
+                        filemode='a',
+                        format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                        datefmt='%m/%d/%Y %H:%M:%S',
+                        level=logging.DEBUG)
 
     start_time = time.time()
     eq = ElasticQuery(server, index, username, password)
