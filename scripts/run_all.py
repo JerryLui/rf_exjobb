@@ -6,8 +6,9 @@ import sys
 sys.path.append("/home/jliu/rf_exjobb/scripts/")  # Configure
 
 from elasticquery import ElasticQuery
-from detector import Detector, DetectorPool
+from detector import Detector, DetectorPool, Detection
 from settings import server, index, username, password
+from helper_functions import int_ext_filter, protocol_filter
 
 
 # Logging initialization
