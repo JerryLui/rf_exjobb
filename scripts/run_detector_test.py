@@ -15,6 +15,26 @@ def get_dummy_data():
     data['last_switched'] = pd.to_datetime(data.last_switched)
     return data
 
+def int_ext_filter(frame):
+    '''
+    Sorts values into internal/external.
+    Note that it is not sensitive to internal -> internal
+    '''
+    cond = (frame.src_addr.str.startswith('172.20') | 
+            frame.src_addr.str.startswith('172.21'))
+
+    #internal -> external
+    frame.loc[cond, 'internal'] = frame.loc[cond].src_addr
+    frame.loc[cond, 'external'] = frame.loc[cond].dst_addr
+
+    cond = (frame.dst_addr.str.startswith('172.20') | 
+            frame.dst_addr.str.startswith('172.21'))
+
+    #external -> internal
+    frame.loc[cond, 'internal'] = frame.loc[cond].dst_addr
+    frame.loc[cond, 'external'] = frame.loc[cond].src_addr
+
+    return frame
 
 def protocol_filter(proto):
     def p_filter(frame):

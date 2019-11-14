@@ -42,7 +42,7 @@ class DetectorPool():
             new = det.run_next_timestep(frame)
             for d in new:
                 new_detections.append(d)
-        print(new_detections) #<- or some version of this
+        return new_detections
         
     def get_results():
         pass
