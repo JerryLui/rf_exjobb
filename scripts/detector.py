@@ -42,7 +42,7 @@ class DetectorPool():
             new = det.run_next_timestep(frame)
             for d in new:
                 new_detections.append(d)
-        print(new_detections) #<- or some version of this
+        return new_detections
         
     def get_results():
         pass
@@ -108,10 +108,6 @@ class Detector():
 
 
         detections = []
-        #trigger_feature = []
-        #trigger_value   = []
-        #trigger_number  = []
-        #trigger_step    = []
 
         for f, feat in enumerate(self.features):
             #AGGREGATIONS ARE NOT IMPLEMENTED YET
