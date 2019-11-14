@@ -12,7 +12,7 @@ from helper_functions import int_ext_filter, protocol_filter
 
 
 # Logging initialization
-fp_log = 'elastic_query.log'  # Configure
+fp_log = datetime.now().strftime('l%d%H%M.log')  # Configure
 logging.basicConfig(filename=fp_log,
                     filemode='a',
                     format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
@@ -41,15 +41,15 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     )
 
     while current_time < end_time:
-        data = eq.query_time(start_time, window_size)
+        data = eq.query_time(current_time, window_size)
         results = det.run_next_timestep(data)
-        print(results)
+        logger.debug(results)
         current_time += window_size
 
 
 if __name__ == '__main__':
     time_window = timedelta(minutes=5)
-    run(datetime(2019, 10, 28, 4, 0), datetime(2019, 10, 28, 4, 5), time_window)
+    run(datetime(2019, 10, 28, 4, 0), datetime(2019, 10, 29, 4, 5), time_window)
 
 
 
