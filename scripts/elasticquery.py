@@ -99,8 +99,11 @@ class ElasticQuery(object):
         while True:
             try:
                 rows = []
-                for hit in response['hits']['hits']:
-                    row = hit['_source']['flow']
+                for i, hit in enumerate(response['hits']['hits']):
+                    row = hit['_source'].get('flow')
+                    if not row:
+                        continue
+
                     row.update(hit['_source']['node'])
                     rows.append(row)
             except Exception as e:
