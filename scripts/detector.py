@@ -108,10 +108,6 @@ class Detector():
 
 
         detections = []
-        #trigger_feature = []
-        #trigger_value   = []
-        #trigger_number  = []
-        #trigger_step    = []
 
         for f, feat in enumerate(self.features):
             #AGGREGATIONS ARE NOT IMPLEMENTED YET

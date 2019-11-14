@@ -16,24 +16,53 @@ def get_dummy_data():
     return data
 
 
+def protocol_filter(proto):
+    def p_filter(frame):
+        subframe = frame.loc[
+                frame.ip_protocol == proto
+                ] 
+        return subframe
+    return p_filter
+
+
 if __name__ == '__main__':
     dp = DetectorPool()
     
-    det = Detector(
-            name='det1',
+    tcp = Detector(
+            name='tcp',
             n_seeds=8,
             n_bins=256,
             mav_steps=5,
             features=['src_addr', 'dst_addr'],
-            filt=None,
+            filt=protocol_filter('TCP'),
+            thresh=0.1
+            )
+    udp = Detector(
+            name='udp',
+            n_seeds=8,
+            n_bins=32,
+            mav_steps=5,
+            features=['src_addr', 'dst_addr'],
+            filt=protocol_filter('UDP'),
+            thresh=0.08
+            )
+    icmp = Detector(
+            name='icmp',
+            n_seeds=8,
+            n_bins=16,
+            mav_steps=5,
+            features=['src_addr', 'dst_addr'],
+            filt=protocol_filter('TCP'),
             thresh=0.05
             )
 
-    dp.add_detector(det)
+    dp.add_detector(tcp)
+    dp.add_detector(udp)
+    dp.add_detector(icmp)
 
     dummy = get_dummy_data()
     
-    steps = 30
+    steps = 20
 
     divs = np.zeros((8, steps))
     mav  = np.zeros((steps, ))
@@ -48,9 +77,9 @@ if __name__ == '__main__':
         print('Running timestep:\t%i' % i)
         dp.next_timestep(subwin)
 
-        new_div = dp.get_detector_divs()['det1']
+        new_div = dp.get_detector_divs()['icmp']
         divs[:, i] = new_div[0, :]
-        new_mav = dp.get_detector_mavs()['det1']
+        new_mav = dp.get_detector_mavs()['icmp']
         mav[i] = new_mav[0]
 
     fig, ax = plt.subplots()
