@@ -99,12 +99,16 @@ class ElasticQuery(object):
 
         response_batch = 1
         while True:
-            rows = []
-            for hit in response['hits']['hits']:
-                row = hit['_source']['flow']
-                row.update(hit['_source']['netflow'])
-                row.update(hit['_source']['node'])
-                rows.append(row)
+            try:
+                rows = []
+                for hit in response['hits']['hits']:
+                    row = hit['_source']['flow']
+                    row.update(hit['_source']['netflow'])
+                    row.update(hit['_source']['node'])
+                    rows.append(row)
+            except Exception as e:
+                logger.error('Parser failed at:\n' + str(hit))
+                raise e
 
             df_tmp = df_tmp.append(pd.DataFrame.from_dict(rows), sort=False)
 
