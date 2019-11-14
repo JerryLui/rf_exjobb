@@ -45,17 +45,17 @@ class ElasticQuery(object):
                                 ['hits.hits._source.node.' + _ for _ in self.col_node]
         self.response_filter = ['_scroll_id', 'hits.total.value', 'hits.hits._source.@timestamp'] + self.response_columns
 
-    def query_time(self, start_time: datetime, window_time=5):
+    def query_time(self, start_time: datetime, window_size: timedelta):
         """
         Queries ElasticSearch server starting at start_time
 
         :param start_time: datetime to start search at
-        :param window_time: time window size of search
+        :param window_size: lookup window size in timedelta
         :return: dataframe containing data in the time window if any
         """
         # Time parameters
         time_current = start_time
-        time_change = timedelta(minutes=window_time)
+        time_change = window_size
 
         query = \
             {'query':
@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
     start_time = time.time()
     eq = ElasticQuery(server, index, username, password)
-    df = eq.query_time(datetime(2019, 9, 2, 9, 0))
+    df = eq.query_time(datetime(2019, 9, 2, 9, 0), timedelta(minutes=5))
     time_elapsed = time.time() - start_time
     print('Time Elapsed %.2f' % time_elapsed)
 
