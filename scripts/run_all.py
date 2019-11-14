@@ -18,8 +18,10 @@ logging.basicConfig(filename=fp_log,
                     datefmt='%m/%d/%Y %H:%M:%S',
                     level=logging.DEBUG)
 logger = logging.getLogger('rf_exjobb')
+
 es_logger = logging.getLogger('elasticsearch')
 es_logger.propagate = False
+
 ul_logger = logging.getLogger('urllib3.connectionpool')
 ul_logger.propagate = False
 
@@ -38,7 +40,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     )
 
     while current_time < end_time:
-        data = eq.query_time(start_time, window_size)
+        data = eq.query_time(start_time, window_size.seconds//60)
         results = det.run_next_timestep(data)
         print(results)
         current_time += window_size
