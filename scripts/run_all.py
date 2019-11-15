@@ -30,19 +30,42 @@ ul_logger.propagate = False
 def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     current_time = start_time
     eq = ElasticQuery(server, index, username, password)
-    det = Detector(
-        name='Detector',
+    dp = DetectorPool()
+
+    tcp_det = Detector(
+        name='TCP',
         n_seeds=8,
         n_bins=256,
         mav_steps=5,
         features=['src_addr', 'dst_addr'],
-        filt=None,
+        filt=protocol_filter('TCP'),
         thresh=0.1
     )
+    udp_det = Detector(
+        name='UDP',
+        n_seeds=8,
+        n_bins=64,
+        mav_steps=5,
+        features=['src_addr', 'dst_addr'],
+        filt=protocol_filter('UDP'),
+        thresh=0.1
+    )
+    icmp_det = Detector(
+        name='ICMP',
+        n_seeds=8,
+        n_bins=16,
+        mav_steps=5,
+        features=['src_addr', 'dst_addr'],
+        filt=protocol_filter('ICMP'),
+        thresh=0.1
+    )
+    dp.add_detector(tcp_det)
+    dp.add_detector(udp_det)
+    dp.add_detector(icmp_det)
 
     while current_time < end_time:
         data = eq.query_time(current_time, window_size)
-        results = det.run_next_timestep(data)
+        results = dp.run_next_timestep(data)
         logger.debug(results)
         current_time += window_size
 

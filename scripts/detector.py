@@ -1,10 +1,12 @@
 """
 Detects and extracts anomalies in input netflow data
 """
-
 import pandas as pd
 import numpy as np
 from helper_functions import KL_divergence, hash_to_buckets
+
+# Logging
+logger = logging.getLogger('rf_exjobb')
 
 class Detection():
     '''
@@ -53,7 +55,7 @@ class DetectorPool():
         '''
         self.detectors.append(new_det)
 
-    def next_timestep(self, frame):
+    def run_next_timestep(self, frame):
         '''
         Runs the next timestep. Every detector is fed the same dataframe, and all detections are returned in a list
 
