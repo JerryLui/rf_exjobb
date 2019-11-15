@@ -68,7 +68,13 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     thread_pool = ProcessPoolExecutor(1)
     futures = []
     while current_time < end_time:
+<<<<<<< HEAD
         futures.append(thread_pool.submit(eq.query_time, current_time, window_size))
+=======
+        data = eq.query_time(current_time, window_size)
+        results = dp.run_next_timestep(data)
+        logger.debug(results[0])
+>>>>>>> af483f48ebee13da2f4712261655f6bfb979d030
         current_time += window_size
 
     for future in as_completed(futures):

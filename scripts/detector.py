@@ -3,6 +3,7 @@ Detects and extracts anomalies in input netflow data
 """
 import pandas as pd
 import numpy as np
+import logging
 from helper_functions import KL_divergence, hash_to_buckets
 
 # Logging
@@ -32,7 +33,7 @@ class Detection():
         self.timestep    = timestep
 
     def __repr__(self):
-        return '\n%s:\t%s:\t%s:' % (self.detector, self.feature, self.value)
+        return '\n%s\t%s\t%s\t%s' % (self.detector, self.feature, self.value, self.number)
 
 class DetectorPool():
     '''
@@ -63,14 +64,14 @@ class DetectorPool():
         :return: Returns a list of Detection objects corresponding to all detections within that frame
         '''
         new_detections = []
+        detection_frames = []
         for det in self.detectors:
-            new = det.run_next_timestep(frame)
-            for d in new:
+            (dets, det_frame) = det.run_next_timestep(frame)
+            for d in dets:
                 new_detections.append(d)
-        return new_detections
-        
-    def get_results():
-        pass
+            detection_frames.append(det_frame)
+        detection_frame = pd.concat(detection_frames, axis=0, ignore_index=True)
+        return (new_detections, detection_frame)
 
     def get_detector_divs(self):
         '''
@@ -145,14 +146,14 @@ class Detector():
         Runs the given dataframe as the next timestep
 
         :param frame: Pandas dataframe to analyze
-        :returns: List of Detection objects
+        :returns: Tuple like (List of Detection objects, Dataframe containing all flows related to detection)
         '''
         frame = self.applyfilter(frame)
 
         histograms = np.zeros((len(self.features), self.n_seeds, self.n_bins))
         bin_set    = [[[set() for _ in range(self.n_bins)]
                     for __ in range(self.n_seeds)] for ___ in self.features]
-        flags      = [[[]
+        flags      = [[None
                     for __ in range(self.n_seeds)] for ___ in self.features]
 
 
@@ -179,20 +180,13 @@ class Detector():
                     #This overwrites the old elements of rolling div array
                     self.divs[f, s, 0] = div
 
-            #Detection per seed, use mav method
-            # - Last iteration's bins -> last_histograms
-            if self.step > 1:
-                for s, seed in enumerate(self.seeds):
+                #Detection per seed, use mav method
+                # - Last iteration's bins -> last_histograms
+                if self.step > 1:
                     last = np.copy(self.last_histograms[f, s, :])
                     current = np.copy(histograms[f, s, :])
-                    new_div = div
-                    n = 0
-                    while (new_div - self.mav[f]) > self.thresh and n < self.n_bins:
-                        b = np.argmax(np.abs(last - current))
-                        flags[f][s].append(b) #Flag bin b
-                        current[b] = last[b]
-                        new_div = KL_divergence(current, last)
-                        n += 1
+                    bins = self.mav_detection(self.mav[f], div, current, last)
+                    flags[f][s] = bins
 
             #Extraction must also be done on this level
 
@@ -236,7 +230,42 @@ class Detector():
         self.last_histograms = histograms
         self.last_bin_set    = bin_set
 
-        return detections
+        sub_frames = []
+        for det in detections:
+            feat = det.feature
+            val = det.value
+            sub = frame.loc[
+                    frame[feat] == val
+                    ]
+            sub_frames.append(sub)
+        if sub_frames:
+            detection_frame = pd.concat(sub_frames, axis=0)
+        else:
+            detection_frame = pd.DataFrame()
+
+        return (detections, detection_frame)
+
+    def mav_detection(self, mav, div, current, last):
+        '''
+        Run moving average detection
+
+        :param mav: The current moving average to compare to
+        :param div: KL-divergence for current timestep (only supplied to not recalculate)
+        :param current: Current histogram to compare
+        :param last: Last histogram to compare
+        :return: Bins which trigger the moving average detectiuon rule
+        '''
+        new_div = div
+        n = 0
+        bins = []
+        while (new_div - mav) > self.thresh and n < self.n_bins:
+            b = np.argmax(np.abs(last - current))
+            bins.append(b) #Flag bin b
+            current[b] = last[b]
+            new_div = KL_divergence(current, last)
+            n += 1
+        return bins
+
 
     def applyfilter(self, frame):
         '''

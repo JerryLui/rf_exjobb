@@ -49,13 +49,13 @@ if __name__ == '__main__':
     dp = DetectorPool()
     
     tcp = Detector(
-            name='tcp',
+            name='int_ext',
             n_seeds=8,
             n_bins=256,
             mav_steps=5,
-            features=['src_addr', 'dst_addr'],
-            filt=protocol_filter('TCP'),
-            thresh=0.1
+            features=['internal', 'external'],
+            filt=int_ext_filter,
+            thresh=0.05
             )
     udp = Detector(
             name='udp',
@@ -64,16 +64,16 @@ if __name__ == '__main__':
             mav_steps=5,
             features=['src_addr', 'dst_addr'],
             filt=protocol_filter('UDP'),
-            thresh=0.08
+            thresh=0.05
             )
     icmp = Detector(
             name='icmp',
             n_seeds=8,
             n_bins=16,
-            mav_stepsu5,
+            mav_steps=5,
             features=['src_addr', 'dst_addr'],
             filt=protocol_filter('TCP'),
-            thresh=0.05
+            thresh=0.02
             )
 
     dp.add_detector(tcp)
@@ -95,7 +95,10 @@ if __name__ == '__main__':
                 (dummy.time <  min_time + pd.Timedelta(minutes=(i+1)*step_len))
                 ]
         print('Running timestep:\t%i' % i)
-        dp.next_timestep(subwin)
+        results = dp.run_next_timestep(subwin)
+        print(results[0])
+        #print('Detection frame contains %i rows' % results[1].shape[0])
+        print(results[1].head(10))
 
         new_div = dp.get_detector_divs()['icmp']
         divs[:, i] = new_div[0, :]
