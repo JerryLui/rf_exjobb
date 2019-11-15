@@ -120,7 +120,7 @@ class ElasticQuery(object):
             response = self.client.scroll(scroll_id=scroll_id, scroll='2m', filter_path=self.response_filter)
             response_batch += 1
 
-        return pd.concat(df_lst)
+        return pd.concat(df_lst, sort=False)
 
 
 if __name__ == '__main__':
