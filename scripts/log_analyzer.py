@@ -1,29 +1,53 @@
 from datetime import datetime
 import numpy as np
 
-read_file = 'rf_exjobb/scripts/l141242.log'
-with open(read_file, 'r') as f:
-    lines = f.readlines()
 
-structured_lines = []
-last_time = datetime(1900, 1, 1)
-avg_time = []
-for line in lines:
-    line = line.rstrip().split()
-    try:
-        log_time = datetime.strptime(line[1], '%H:%M:%S,%f')
-        log_message = line[4]
-        structured_lines.append((log_time, log_message))
+def analyze(read_file):
+    with open(read_file, 'r') as f:
+        lines = f.readlines()
 
-        if log_message == 'Processed':
-            avg_time.append((log_time - last_time).seconds)
-            last_time = log_time
+    structured_lines = []
+    last_time = datetime(1900, 1, 1)
+    last_line_time = datetime(1900, 1, 1)
 
-    except ValueError:
-        continue
+    cycle_times = []
+    detection_times = []
+    for line in lines:
+        line = line.rstrip().split()
+        try:
+            log_time = datetime.strptime(line[1], '%H:%M:%S,%f')
+            log_message = line[4]
+            structured_lines.append((log_time, log_message))
 
-avg_time = avg_time[1:]
-print(np.mean(avg_time[-12:]))
-print(np.median(avg_time[-12:]))
+            if log_message not in ['Processed', 'Querying', 'Processing']:
+                detection_times.append((log_time - last_line_time).total_seconds())
+            elif log_message == 'Processed':
+                cycle_times.append((log_time - last_time).total_seconds())
+                last_time = log_time
+            last_line_time = log_time
+
+        except Exception as e:
+            continue
+
+    cycle_times = cycle_times[1:]
+    detection_times = detection_times[1:]
+
+    print('----- Cycle Times -----')
+    print('Mean: %.2f' % (np.mean(cycle_times[-12:])))
+    print('Median %.2f' % (np.median(cycle_times[-12:])))
+
+    print('----- Detection Times -----')
+    print('Mean: %.2f' % (np.mean(detection_times[-12:])))
+    print('Median: %.2f' % (np.median(detection_times[-12:])))
+
+    return structured_lines
 
 
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv) > 1:
+        read_files = [sys.argv[i] for i in range(1, len(sys.argv))]
+    else:
+        read_files = ['rf_exjobb/scripts/l151202.log']
+
+    results = [analyze(file) for file in read_files]
