@@ -100,19 +100,15 @@ class ElasticQuery(object):
         response_batch = 1
         lines_skipped = 0
         while True:
-            try:
-                rows = []
-                for i, hit in enumerate(response['hits']['hits']):
-                    row = hit['_source'].get('flow', None)
-                    if not row:
-                        lines_skipped += 1
-                        continue
-                    row.update(hit['_source']['node'])
-                    row.update({'timestamp': hit['_source']['@timestamp']})
-                    rows.append(row)
-            except Exception as e:
-                logger.error('Parser failed at:\n' + str(hit))
-                raise e
+            rows = []
+            for i, hit in enumerate(response['hits']['hits']):
+                row = hit['_source'].get('flow', None)
+                if not row:
+                    lines_skipped += 1
+                    continue
+                row.update(hit['_source']['node'])
+                row.update({'timestamp': hit['_source']['@timestamp']})
+                rows.append(row)
             df_lst.append(df_tmp.from_dict(rows))
 
             # Exit condition
@@ -130,7 +126,7 @@ class ElasticQuery(object):
 if __name__ == '__main__':
     import time
     # import sys  # Used for local imports
-
+    #
     # sys.path.append("/home/jliu/rf_exjobb/scripts/")  # Configure
     from settings import *
 
