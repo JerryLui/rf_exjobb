@@ -49,13 +49,13 @@ if __name__ == '__main__':
     dp = DetectorPool()
     
     tcp = Detector(
-            name='int_ext',
+            name='tcp',
             n_seeds=8,
             n_bins=256,
             mav_steps=5,
-            features=['internal', 'external'],
-            filt=int_ext_filter,
-            thresh=0.05
+            features=['src_addr', 'dst_addr'],
+            filt=protocol_filter('TCP'),
+            thresh=0.2
             )
     udp = Detector(
             name='udp',

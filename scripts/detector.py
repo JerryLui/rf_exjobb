@@ -61,7 +61,7 @@ class DetectorPool():
         Runs the next timestep. Every detector is fed the same dataframe, and all detections are returned in a list
 
         :param frame: Pandas dataframe to feed into detectors
-        :return: Returns a list of Detection objects corresponding to all detections within that frame
+        :return: Tuple like (List of Detection objects, DataFrame containing relevant flows)
         '''
         new_detections = []
         detection_frames = []
@@ -102,7 +102,7 @@ class Detector():
     '''
 
     def __init__(self, name, n_seeds, n_bins,
-            mav_steps, features, filt, thresh):
+            mav_steps, features, filt, thresh, detection_rule='mav'):
         '''
         The Detector analyzes some feature using DESCRIPTION
 
@@ -122,6 +122,8 @@ class Detector():
         #self.aggregations = []       #Feature/aggregation should probably be a pair
         self.filt         = filt      #Filter function to apply to data before detect
         self.thresh       = thresh    #KL Threshold for a detection
+
+        self.detection_rule = detection_rule #Which detection rule to use
 
         #Parameter-dependent initializations
         self.seeds = np.random.choice(100000, size=self.n_seeds, replace=False)
@@ -185,7 +187,12 @@ class Detector():
                 if self.step > 1:
                     last = np.copy(self.last_histograms[f, s, :])
                     current = np.copy(histograms[f, s, :])
-                    bins = self.mav_detection(self.mav[f], div, current, last)
+                    if self.detection_rule == 'mav':
+                        bins = self.mav_detection(self.mav[f], div, current, last)
+                    elif self.detection_rule == 'flat':
+                        bins = self.flat_detection(div, current, last)
+                    else:
+                        logging.error('Invalid detection rule')
                     flags[f][s] = bins
 
             #Extraction must also be done on this level
@@ -264,6 +271,24 @@ class Detector():
             current[b] = last[b]
             new_div = KL_divergence(current, last)
             n += 1
+        return bins
+
+    def flat_detection(self, div, current, last):
+        '''
+        Run flat value detection
+
+        :param div: KL-divergence for current timestep (only supplied to not recalculate)
+        :param current: Current histogram to compare
+        :param last: Last histogram to compare
+        :return: Bins which trigger the flat detection rule
+        '''
+        new_div = div
+        bins = []
+        while new_div > self.thresh:
+            b = np.argmax(np.abs(last - current))
+            bins.append(b)
+            current[b] = last[b]
+            new_div = KL_divergence(current, last)
         return bins
 
 
