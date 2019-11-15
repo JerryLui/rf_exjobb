@@ -4,6 +4,7 @@ Detects and extracts anomalies in input netflow data
 import pandas as pd
 import numpy as np
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from helper_functions import KL_divergence, hash_to_buckets
 
 # Logging
@@ -65,13 +66,30 @@ class DetectorPool():
         '''
         new_detections = []
         detection_frames = []
-        for det in self.detectors:
-            (dets, det_frame) = det.run_next_timestep(frame)
+
+        # for det in self.detectors:
+        #     (dets, det_frame) = det.run_next_timestep(frame)
+        #     for d in dets:
+        #         new_detections.append(d)
+        #     detection_frames.append(det_frame)
+        # detection_frame = pd.concat(detection_frames, axis=0, ignore_index=True)
+
+        thread_pool = ThreadPoolExecutor(max_workers=5)
+        futures = thread_pool.map(lambda det: det.run_next_timestep(frame), self.detectors)
+        for dets, det_frame in futures:
             for d in dets:
                 new_detections.append(d)
             detection_frames.append(det_frame)
         detection_frame = pd.concat(detection_frames, axis=0, ignore_index=True)
+
+
+
+
+
+
+
         return (new_detections, detection_frame)
+
 
     def get_detector_divs(self):
         '''
