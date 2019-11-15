@@ -3,6 +3,7 @@ import numpy as np
 
 
 def analyze(read_file):
+    print('\nFile:\t%s' % read_file)
     with open(read_file, 'r') as f:
         lines = f.readlines()
 
@@ -32,13 +33,14 @@ def analyze(read_file):
     cycle_times = cycle_times[1:]
     detection_times = detection_times[1:]
 
-    print('----- Cycle Times -----')
-    print('Mean: %.2f' % (np.mean(cycle_times[-12:])))
-    print('Median %.2f' % (np.median(cycle_times[-12:])))
+    print('Cycle Times')
+    print('Mean:\t%.2f' % (np.mean(cycle_times)))
+    print('Median\t%.2f' % (np.median(cycle_times)))
 
-    print('----- Detection Times -----')
-    print('Mean: %.2f' % (np.mean(detection_times[-12:])))
-    print('Median: %.2f' % (np.median(detection_times[-12:])))
+    print('Detection Times')
+    print('Mean:\t%.2f' % (np.mean(detection_times)))
+    print('Median:\t%.2f' % (np.median(detection_times)))
+
 
     return structured_lines
 
