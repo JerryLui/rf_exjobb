@@ -55,7 +55,7 @@ if __name__ == '__main__':
             mav_steps=5,
             features=['src_addr', 'dst_addr'],
             filt=protocol_filter('TCP'),
-            thresh=0.1
+            thresh=0.05
             )
     udp = Detector(
             name='udp',
@@ -70,10 +70,10 @@ if __name__ == '__main__':
             name='icmp',
             n_seeds=8,
             n_bins=16,
-            mav_stepsu5,
+            mav_steps=5,
             features=['src_addr', 'dst_addr'],
             filt=protocol_filter('TCP'),
-            thresh=0.05
+            thresh=0.02
             )
 
     dp.add_detector(tcp)
@@ -95,7 +95,7 @@ if __name__ == '__main__':
                 (dummy.time <  min_time + pd.Timedelta(minutes=(i+1)*step_len))
                 ]
         print('Running timestep:\t%i' % i)
-        dp.next_timestep(subwin)
+        print(dp.run_next_timestep(subwin))
 
         new_div = dp.get_detector_divs()['icmp']
         divs[:, i] = new_div[0, :]
