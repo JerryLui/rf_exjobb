@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import pandas as pd
 import numpy as np
 import logging
@@ -65,7 +65,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     dp.add_detector(icmp_det)
 
     # Threading
-    thread_pool = ThreadPoolExecutor(1)
+    thread_pool = ProcessPoolExecutor(1)
     futures = []
     while current_time < end_time:
         futures.append(thread_pool.submit(eq.query_time, current_time, window_size))
