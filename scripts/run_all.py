@@ -13,7 +13,7 @@ from helper_functions import int_ext_filter, protocol_filter
 
 
 # Logging initialization
-fp_log = datetime.now().strftime('l%d%H%M.log')  # Configure
+fp_log = datetime.now().strftime('logs/l%d%H%M.log')  # Configure
 logging.basicConfig(filename=fp_log,
                     filemode='a',
                     format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
