@@ -29,6 +29,7 @@ def int_ext_filter(frame):
     Sorts values into internal/external.
     Note that it is not sensitive to internal -> internal
     '''
+    frame = frame.copy()
     cond = (frame.src_addr.str.startswith('172.20') | 
             frame.src_addr.str.startswith('172.21'))
 
@@ -47,6 +48,7 @@ def int_ext_filter(frame):
 
 def protocol_filter(proto):
     def p_filter(frame):
+        frame = frame.copy()
         subframe = frame.loc[
                 frame.ip_protocol == proto
                 ] 
