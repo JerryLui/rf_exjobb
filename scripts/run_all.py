@@ -66,7 +66,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     while current_time < end_time:
         data = eq.query_time(current_time, window_size)
         results = dp.run_next_timestep(data)
-        logger.debug(results)
+        logger.debug(results[0])
         current_time += window_size
 
 

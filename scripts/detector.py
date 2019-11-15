@@ -64,14 +64,14 @@ class DetectorPool():
         :return: Returns a list of Detection objects corresponding to all detections within that frame
         '''
         new_detections = []
+        detection_frames = []
         for det in self.detectors:
-            new = det.run_next_timestep(frame)
-            for d in new:
+            (dets, det_frame) = det.run_next_timestep(frame)
+            for d in dets:
                 new_detections.append(d)
-        return new_detections
-        
-    def get_results():
-        pass
+            detection_frames.append(det_frame)
+        detection_frame = pd.concat(detection_frames, axis=0, ignore_index=True)
+        return (new_detections, detection_frame)
 
     def get_detector_divs(self):
         '''
@@ -146,7 +146,7 @@ class Detector():
         Runs the given dataframe as the next timestep
 
         :param frame: Pandas dataframe to analyze
-        :returns: List of Detection objects
+        :returns: Tuple like (List of Detection objects, Dataframe containing all flows related to detection)
         '''
         frame = self.applyfilter(frame)
 
@@ -230,7 +230,20 @@ class Detector():
         self.last_histograms = histograms
         self.last_bin_set    = bin_set
 
-        return detections
+        sub_frames = []
+        for det in detections:
+            feat = det.feature
+            val = det.value
+            sub = frame.loc[
+                    frame[feat] == val
+                    ]
+            sub_frames.append(sub)
+        if sub_frames:
+            detection_frame = pd.concat(sub_frames, axis=0)
+        else:
+            detection_frame = pd.DataFrame()
+
+        return (detections, detection_frame)
 
     def mav_detection(self, mav, div, current, last):
         '''
