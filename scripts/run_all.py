@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 import numpy as np
 import logging
@@ -63,16 +64,21 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     dp.add_detector(udp_det)
     dp.add_detector(icmp_det)
 
+    # Threading
+    thread_pool = ThreadPoolExecutor(1)
+    futures = []
     while current_time < end_time:
-        data = eq.query_time(current_time, window_size)
-        results = dp.run_next_timestep(data)
-        logger.debug(results)
+        futures.append(thread_pool.submit(eq.query_time, current_time, window_size))
         current_time += window_size
+
+    for future in as_completed(futures):
+        results = dp.run_next_timestep(future.result())
+        logger.debug(results)
 
 
 if __name__ == '__main__':
-    time_window = timedelta(minutes=5)
-    run(datetime(2019, 10, 28, 4, 0), datetime(2019, 10, 29, 4, 5), time_window)
+    window_size = timedelta(minutes=5)
+    run(datetime(2019, 10, 28, 4, 0), datetime(2019, 10, 29, 4, 5), window_size)
 
 
 
