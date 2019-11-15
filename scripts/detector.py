@@ -160,7 +160,7 @@ class Detector():
         histograms = np.zeros((len(self.features), self.n_seeds, self.n_bins))
         bin_set    = [[[set() for _ in range(self.n_bins)]
                     for __ in range(self.n_seeds)] for ___ in self.features]
-        flags      = [[None
+        flags      = [[[]
                     for __ in range(self.n_seeds)] for ___ in self.features]
 
 
