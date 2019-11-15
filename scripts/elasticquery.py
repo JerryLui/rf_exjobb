@@ -126,7 +126,7 @@ class ElasticQuery(object):
 if __name__ == '__main__':
     import time
     # import sys  # Used for local imports
-
+    #
     # sys.path.append("/home/jliu/rf_exjobb/scripts/")  # Configure
     from settings import *
 
