@@ -166,6 +166,9 @@ class Detector():
 
         detections = []
 
+        #Roll divs for moving average calculations
+        self.divs = np.roll(self.divs, 1, axis=2)
+
         for f, feat in enumerate(self.features):
             #AGGREGATIONS ARE NOT IMPLEMENTED YET
 
@@ -235,8 +238,6 @@ class Detector():
             else:
                 self.mav[f] = np.sum(self.divs[f, :, :]) / ((self.mav_steps + 1) * self.n_seeds)
                 self.operational = True
-
-        self.divs = np.roll(self.divs, 1, axis=2)
 
         self.step += 1
         self.last_histograms = histograms
@@ -316,7 +317,7 @@ class Detector():
 
         :return: KL-divergences of last timestep
         '''
-        return self.divs[:, :, 1]
+        return self.divs[:, :, 0]
 
     def get_mav(self):
         '''
