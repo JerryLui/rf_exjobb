@@ -61,7 +61,7 @@ class DetectorPool():
         Runs the next timestep. Every detector is fed the same dataframe, and all detections are returned in a list
 
         :param frame: Pandas dataframe to feed into detectors
-        :return: Returns a list of Detection objects corresponding to all detections within that frame
+        :return: Tuple like (List of Detection objects, DataFrame containing relevant flows)
         '''
         new_detections = []
         detection_frames = []
