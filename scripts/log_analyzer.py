@@ -1,7 +1,7 @@
 from datetime import datetime
 import numpy as np
 
-read_file = 'rf_exjobb/scripts/l141242.log'
+read_file = 'rf_exjobb/scripts/l151006.log'
 with open(read_file, 'r') as f:
     lines = f.readlines()
 
@@ -15,15 +15,19 @@ for line in lines:
         log_message = line[4]
         structured_lines.append((log_time, log_message))
 
-        if log_message == 'Processed':
-            avg_time.append((log_time - last_time).seconds)
-            last_time = log_time
+        if log_message not in ['Processed', 'Querying', 'Processing']:
+            print((log_time - last_time).seconds)
 
-    except ValueError:
+
+        # if log_message == 'Processed':
+        #     avg_time.append((log_time - last_time).seconds)
+        last_time = log_time
+
+    except Exception as e:
         continue
 
-avg_time = avg_time[1:]
-print(np.mean(avg_time[-12:]))
-print(np.median(avg_time[-12:]))
-
+# avg_time = avg_time[1:]
+# print(np.mean(avg_time[-12:]))
+# print(np.median(avg_time[-12:]))
+#
 
