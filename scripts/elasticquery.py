@@ -35,9 +35,10 @@ class ElasticQuery(object):
         logger.debug('Connection established.')
 
         # Columns of interest
+        self.col_time = ['timestamp']
         self.col_flow = ['src_addr', 'src_port', 'dst_addr', 'dst_port', 'ip_protocol', 'packets', 'bytes']
         self.col_node = ['ipaddr']
-        self.columns = self.col_flow + self.col_node
+        self.columns = self.col_time + self.col_flow + self.col_node
 
         self.response_columns = ['hits.hits._source.flow.' + _ for _ in self.col_flow] + \
                                 ['hits.hits._source.node.' + _ for _ in self.col_node]
@@ -79,6 +80,7 @@ class ElasticQuery(object):
         :param query: query body given to elastic search
         :return: results as a dataframe
         """
+        df_lst = []
         df_tmp = pd.DataFrame(columns=self.columns)
 
         response = self.client.search(index=self.es_index,
@@ -96,39 +98,40 @@ class ElasticQuery(object):
         logger.debug('Processing %i flows.' % n_flows)
 
         response_batch = 1
+        lines_skipped = 0
         while True:
             try:
                 rows = []
                 for i, hit in enumerate(response['hits']['hits']):
-                    row = hit['_source'].get('flow')
+                    row = hit['_source'].get('flow', None)
                     if not row:
+                        lines_skipped += 1
                         continue
-
                     row.update(hit['_source']['node'])
+                    row.update({'timestamp': hit['_source']['@timestamp']})
                     rows.append(row)
             except Exception as e:
                 logger.error('Parser failed at:\n' + str(hit))
                 raise e
-
-            df_tmp = df_tmp.append(pd.DataFrame.from_dict(rows), sort=False)
+            df_lst.append(df_tmp.from_dict(rows))
 
             # Exit condition
             if len(response['hits']['hits']) < self.QUERY_SIZE:
-                logger.debug('Processed %i batches.' % response_batch)
+                logger.debug('Processed %i batches, skipped %i lines.' % (response_batch, lines_skipped))
                 break
 
             # Get next set
             response = self.client.scroll(scroll_id=scroll_id, scroll='2m', filter_path=self.response_filter)
             response_batch += 1
 
-        return df_tmp
+        return pd.concat(df_lst)
 
 
 if __name__ == '__main__':
     import time
-    import sys  # Used for local imports
+    # import sys  # Used for local imports
 
-    sys.path.append("/home/jliu/rf_exjobb/scripts/")  # Configure
+    # sys.path.append("/home/jliu/rf_exjobb/scripts/")  # Configure
     from settings import *
 
     # Configuration parameters
@@ -140,10 +143,19 @@ if __name__ == '__main__':
                         format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
                         level=logging.DEBUG)
+    logger = logging.getLogger('rf_exjobb')
+
+    es_logger = logging.getLogger('elasticsearch')
+    es_logger.propagate = False
+
+    ul_logger = logging.getLogger('urllib3.connectionpool')
+    ul_logger.propagate = False
 
     t0 = time.time()
     eq = ElasticQuery(server, index, username, password)
     df = eq.query_time(datetime(2019, 9, 2, 9, 0), timedelta(minutes=5))
     t1 = time.time() - t0
+
     print('Time Elapsed %.2f' % t1)
+
 
