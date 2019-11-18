@@ -14,6 +14,7 @@ def analyze(read_file):
 
     cycle_times = []
     detection_times = []
+    batch_sizes = []
     start_time = None
     for line in lines:
         line = line.rstrip().split()
@@ -30,6 +31,7 @@ def analyze(read_file):
             elif log_message == 'Processed':
                 cycle_times.append((log_time - last_time).total_seconds())
                 last_time = log_time
+                batch_sizes.append(int(line[5]))
             last_line_time = log_time
 
         except Exception as e:
@@ -39,7 +41,12 @@ def analyze(read_file):
     cycle_times = cycle_times[1:]
     detection_times = detection_times[1:]
     
-    print('Total\t%.2f min' % ((end_time - start_time).total_seconds()/60))
+    print('Total:\t%.2f min' % ((end_time - start_time).total_seconds()/60))
+    print('\t%i batches' % len(batch_sizes))
+
+    print('Batches Sizes')
+    print('Mean:\t%.2f' % (np.mean(batch_sizes)))
+    print('Median:\t%i' % (np.median(batch_sizes)))
 
     print('Cycle Times')
     print('Mean:\t%.2f' % (np.mean(cycle_times)))

@@ -32,7 +32,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     det = Detector(
         name='Dummy',
         n_seeds=1,
-        n_bins=1,
+        n_bins=256,
         mav_steps=2,
         features=['src_addr', 'dst_addr'],
         filt=None,
@@ -54,6 +54,6 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     #Save as a pickle
 
 if __name__ == '__main__':
-    window_size = timedelta(minutes=5)
-    run(datetime(2019, 10, 28, 4, 0), datetime(2019, 10, 28, 6, 0), window_size)
+    window_size = timedelta(minutes=15)
+    run(datetime(2019, 10, 28, 0, 0), datetime(2019, 10, 31, 0, 0), window_size)
 
