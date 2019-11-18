@@ -29,6 +29,8 @@ def int_ext_filter(frame):
     Note that it is not sensitive to internal -> internal
     '''
     frame = frame.copy()
+    frame['internal'] = ''
+    frame['external'] = ''
     cond = (frame.src_addr.str.startswith('172.20') | 
             frame.src_addr.str.startswith('172.21'))
 

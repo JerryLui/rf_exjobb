@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 
+from helper_functions import int_ext_filter, protocol_filter
 from detector import Detector, DetectorPool
 
 
@@ -15,70 +16,19 @@ def get_dummy_data():
     data['last_switched'] = pd.to_datetime(data.last_switched)
     return data
 
-def int_ext_filter(frame):
-    '''
-    Sorts values into internal/external.
-    Note that it is not sensitive to internal -> internal
-    '''
-    cond = (frame.src_addr.str.startswith('172.20') | 
-            frame.src_addr.str.startswith('172.21'))
-
-    #internal -> external
-    frame.loc[cond, 'internal'] = frame.loc[cond].src_addr
-    frame.loc[cond, 'external'] = frame.loc[cond].dst_addr
-
-    cond = (frame.dst_addr.str.startswith('172.20') | 
-            frame.dst_addr.str.startswith('172.21'))
-
-    #external -> internal
-    frame.loc[cond, 'internal'] = frame.loc[cond].dst_addr
-    frame.loc[cond, 'external'] = frame.loc[cond].src_addr
-
-    return frame
-
-def protocol_filter(proto):
-    def p_filter(frame):
-        subframe = frame.loc[
-                frame.ip_protocol == proto
-                ] 
-        return subframe
-    return p_filter
-
-
 if __name__ == '__main__':
     dp = DetectorPool()
     
-    tcp = Detector(
-            name='tcp',
+    int_ext = Detector(
+            name='int_ext',
             n_seeds=8,
             n_bins=256,
-            mav_steps=5,
-            features=['src_addr', 'dst_addr'],
-            filt=protocol_filter('TCP'),
-            thresh=0.2
-            )
-    udp = Detector(
-            name='udp',
-            n_seeds=8,
-            n_bins=32,
-            mav_steps=5,
-            features=['src_addr', 'dst_addr'],
-            filt=protocol_filter('UDP'),
+            mav_steps=3,
+            features=['internal', 'external'],
+            filt=int_ext_filter,
             thresh=0.05
             )
-    icmp = Detector(
-            name='icmp',
-            n_seeds=8,
-            n_bins=16,
-            mav_steps=5,
-            features=['src_addr', 'dst_addr'],
-            filt=protocol_filter('TCP'),
-            thresh=0.02
-            )
-
-    dp.add_detector(tcp)
-    dp.add_detector(udp)
-    dp.add_detector(icmp)
+    dp.add_detector(int_ext)
 
     dummy = get_dummy_data()
     
@@ -100,15 +50,15 @@ if __name__ == '__main__':
         #print('Detection frame contains %i rows' % results[1].shape[0])
         print(results[1].head(10))
 
-        new_div = dp.get_detector_divs()['icmp']
-        divs[:, i] = new_div[0, :]
-        new_mav = dp.get_detector_mavs()['icmp']
-        mav[i] = new_mav[0]
+        #new_div = dp.get_detector_divs()['icmp']
+        #divs[:, i] = new_div[0, :]
+        #new_mav = dp.get_detector_mavs()['icmp']
+        #mav[i] = new_mav[0]
 
-    fig, ax = plt.subplots()
-    for n in range(8):
-        ax.plot(divs[n,:])
-    ax.plot(mav, 'r+-')
-    plt.show()
+    #fig, ax = plt.subplots()
+    #for n in range(8):
+    #    ax.plot(divs[n,:])
+    #ax.plot(mav, 'r+-')
+    #plt.show()
 
     print('Seems to work, no?')
