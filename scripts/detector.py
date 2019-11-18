@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from helper_functions import KL_divergence, hash_to_buckets
+from helper_functions import KL_divergence, hash_to_buckets, detection_list_to_df
 
 # Logging
 logger = logging.getLogger('rf_exjobb')

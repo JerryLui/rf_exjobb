@@ -56,4 +56,27 @@ def protocol_filter(proto):
         return subframe
     return p_filter
 
+def detection_list_to_df(det_list):
+    detector = []
+    operational = []
+    feature = []
+    value = []
+    number = []
+    timestep = []
+    for det in det_list:
+        detector.append(det.detector)
+        operational.append(det.operational)
+        feature.append(det.feature)
+        value.append(det.value)
+        number.append(det.number)
+        timestep.append(det.timestep)
+    return pd.DataFrame(
+            {'detector': detector,
+             'operational': operational,
+             'feature': feature,
+             'value': value,
+             'number': number,
+             'timestep': timestep
+            })
+
 
