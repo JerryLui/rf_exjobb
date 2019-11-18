@@ -9,7 +9,7 @@ sys.path.append("/home/jliu/rf_exjobb/scripts/")  # Configure
 from elasticquery import ElasticQuery
 from detector import Detector, DetectorPool, Detection
 from settings import server, index, username, password
-from helper_functions import int_ext_filter, protocol_filter
+from helper_functions import int_ext_filter, protocol_filter, detection_list_to_df
 
 
 # Logging initialization
@@ -71,9 +71,18 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         futures.append(thread_pool.submit(eq.query_time, current_time, window_size))
         current_time += window_size
 
+    detections = []
+    detection_frames = []
+
     for future in as_completed(futures):
         results = dp.run_next_timestep(future.result())
+        detections.append(results[0])
+        detection_frames.append(results[1])
         logger.debug(results)
+
+    full_detections = pd.concat(deteciton_frames)
+    pd.save(full_detections, 'output/detection_frame.pkl')
+    pd.save(detection_list_to_df(detections), 'output/detections.pkl')
 
 
 if __name__ == '__main__':
