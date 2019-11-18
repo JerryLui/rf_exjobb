@@ -271,10 +271,12 @@ class Detector():
         new_div = div
         n = 0
         bins = []
-        while (new_div - mav) > self.thresh and n < self.n_bins:
+        while np.abs(new_div - mav) > self.thresh and n < self.n_bins:
             b = np.argmax(np.abs(last - current))
             bins.append(b) #Flag bin b
-            current[b] = last[b]
+            #Detection has flagged bin b, now they may be ignored
+            current[b] = 0
+            last[b]    = 0
             new_div = KL_divergence(current, last)
             n += 1
         return bins
