@@ -101,7 +101,7 @@ class ElasticQuery(object):
 
         # Process batches
         batches = int(np.ceil(n_flows/self.QUERY_SIZE))
-        logger.debug('Processing %i batches.' % batches)
+        logger.debug('Processing %i flows.' % n_flows)
 
         # Add first response batch data to store
         df_lst.append(df_tmp.from_dict(self._extract_data(response)))
