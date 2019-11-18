@@ -13,10 +13,10 @@ def analyze(read_file):
 
     cycle_times = []
     detection_times = []
-    for line in lines:
+    for i, line in enumerate(lines):
         line = line.rstrip().split()
         try:
-            log_time = datetime.strptime(line[1], '%H:%M:%S,%f')
+            log_time = datetime.strptime(' '.join(line[:2]), '%m/%d/%Y %H:%M:%S,%f')
             log_message = line[4]
             structured_lines.append((log_time, log_message))
 
@@ -50,6 +50,6 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         read_files = [sys.argv[i] for i in range(1, len(sys.argv))]
     else:
-        read_files = ['rf_exjobb/scripts/l151202.log']
+        read_files = ['/home/jerry/Dropbox/Kurser/Master Thesis/rf_exjobb/scripts/logs/l151602.log']
 
     results = [analyze(file) for file in read_files]
