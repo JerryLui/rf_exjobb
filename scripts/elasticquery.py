@@ -111,7 +111,7 @@ class ElasticQuery(object):
                                               scroll_id=scroll_id,
                                               scroll='2m',
                                               filter_path=self.response_filter))
-                     for _ in range(batches)]
+                     for _ in range(batches-1)]
 
         # Process remaining data
         for response in as_completed(responses):
