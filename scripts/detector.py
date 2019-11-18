@@ -166,13 +166,22 @@ class Detector():
 
         detections = []
 
+        #Roll divs for moving average calculations
+        self.divs = np.roll(self.divs, 1, axis=2)
+
         for f, feat in enumerate(self.features):
             #AGGREGATIONS ARE NOT IMPLEMENTED YET
 
-            feat_series = frame[feat]
+            feat_series = frame[feat].to_numpy()
 
             for s, seed in enumerate(self.seeds):
-                unique, counts = np.unique(feat_series, return_counts=True)
+                try:
+                    unique, counts = np.unique(feat_series, return_counts=True)
+                except Exception as e:
+                    for poo in feat_series:
+                        if not type(poo) == str:
+                            print(poo)
+                    raise e
                 bins = hash_to_buckets(unique, self.bucket_limits, seed)
 
                 for u, b, cnt in zip(unique, bins, counts):
@@ -195,7 +204,7 @@ class Detector():
                     if self.detection_rule == 'mav':
                         bins = self.mav_detection(self.mav[f], div, current, last)
                     elif self.detection_rule == 'flat':
-                        bins = self.flat_detection(div, current, last)
+                        bins = self.flat_detection(self.divs[f, s, 1], div, current, last)
                     else:
                         logging.error('Invalid detection rule')
                     flags[f][s] = bins
@@ -236,8 +245,6 @@ class Detector():
                 self.mav[f] = np.sum(self.divs[f, :, :]) / ((self.mav_steps + 1) * self.n_seeds)
                 self.operational = True
 
-        self.divs = np.roll(self.divs, 1, axis=2)
-
         self.step += 1
         self.last_histograms = histograms
         self.last_bin_set    = bin_set
@@ -273,12 +280,14 @@ class Detector():
         while (new_div - mav) > self.thresh and n < self.n_bins:
             b = np.argmax(np.abs(last - current))
             bins.append(b) #Flag bin b
-            current[b] = last[b]
+            #Detection has flagged bin b, now they may be ignored
+            current[b] = 0
+            last[b]    = 0
             new_div = KL_divergence(current, last)
             n += 1
         return bins
 
-    def flat_detection(self, div, current, last):
+    def flat_detection(self, last_div, div, current, last):
         '''
         Run flat value detection
 
@@ -289,7 +298,8 @@ class Detector():
         '''
         new_div = div
         bins = []
-        while new_div > self.thresh:
+        #For now, only detect positive
+        while (new_div - last_div) > self.thresh:
             b = np.argmax(np.abs(last - current))
             bins.append(b)
             current[b] = last[b]
@@ -316,7 +326,7 @@ class Detector():
 
         :return: KL-divergences of last timestep
         '''
-        return self.divs[:, :, 1]
+        return self.divs[:, :, 0]
 
     def get_mav(self):
         '''

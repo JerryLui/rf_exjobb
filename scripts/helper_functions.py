@@ -11,11 +11,10 @@ def KL_divergence(P, Q):
     '''
     Calculates the KL divergence Dkl(P||Q)
     '''
-    p = P/P.sum()
-    q = Q/Q.sum()
-    div = np.divide(q, p, out=np.zeros_like(p), where=(p!=0))
+    p = P/max(1, P.sum())
+    q = Q/max(1, Q.sum())
+    div = np.divide(q, p, out=np.zeros_like(p), where=((p!=0)&(q!=0)))
     logdiv = np.log(div, out=np.zeros_like(div), where=(div!=0))
-    #D = -np.sum(p * np.log(div))
     D = -np.sum(p*logdiv)
     return D
 
@@ -30,6 +29,8 @@ def int_ext_filter(frame):
     Note that it is not sensitive to internal -> internal
     '''
     frame = frame.copy()
+    frame['internal'] = ''
+    frame['external'] = ''
     cond = (frame.src_addr.str.startswith('172.20') | 
             frame.src_addr.str.startswith('172.21'))
 
