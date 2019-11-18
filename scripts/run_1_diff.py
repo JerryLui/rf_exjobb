@@ -33,9 +33,9 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         name='Dummy',
         n_seeds=1,
         n_bins=1,
-        mav_steps=1,
-        features=['src_addr', 'dst_addr', 'internal', 'external'],
-        filt=int_ext_filter,
+        mav_steps=2,
+        features=['src_addr', 'dst_addr'],
+        filt=None,
         thresh=10
     )
 
