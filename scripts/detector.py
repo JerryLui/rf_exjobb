@@ -204,7 +204,7 @@ class Detector():
                     if self.detection_rule == 'mav':
                         bins = self.mav_detection(self.mav[f], div, current, last)
                     elif self.detection_rule == 'flat':
-                        bins = self.flat_detection(div, current, last)
+                        bins = self.flat_detection(self.divs[f, s, 1], div, current, last)
                     else:
                         logging.error('Invalid detection rule')
                     flags[f][s] = bins
@@ -277,7 +277,7 @@ class Detector():
         new_div = div
         n = 0
         bins = []
-        while np.abs(new_div - mav) > self.thresh and n < self.n_bins:
+        while (new_div - mav) > self.thresh and n < self.n_bins:
             b = np.argmax(np.abs(last - current))
             bins.append(b) #Flag bin b
             #Detection has flagged bin b, now they may be ignored
@@ -287,7 +287,7 @@ class Detector():
             n += 1
         return bins
 
-    def flat_detection(self, div, current, last):
+    def flat_detection(self, last_div, div, current, last):
         '''
         Run flat value detection
 
@@ -298,7 +298,8 @@ class Detector():
         '''
         new_div = div
         bins = []
-        while new_div > self.thresh:
+        #For now, only detect positive
+        while (new_div - last_div) > self.thresh:
             b = np.argmax(np.abs(last - current))
             bins.append(b)
             current[b] = last[b]
