@@ -22,11 +22,12 @@ if __name__ == '__main__':
     int_ext = Detector(
             name='int_ext',
             n_seeds=8,
-            n_bins=256,
+            n_bins=128,
             mav_steps=3,
             features=['internal', 'external'],
             filt=int_ext_filter,
-            thresh=0.05
+            thresh=0.05,
+            detection_rule='two_step'
             )
     dp.add_detector(int_ext)
 

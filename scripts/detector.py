@@ -141,6 +141,7 @@ class Detector():
         #divs is used to calculate mav for every timestep
         self.mav  = np.zeros((len(self.features)))
         self.last_histograms = None
+        self.before_last_histograms = None
         #Need a way to save IP/bin pairs
         self.last_bin_set = None
 
@@ -180,6 +181,7 @@ class Detector():
                 except Exception as e:
                     for poo in feat_series:
                         if not type(poo) == str:
+                            #TODO: Remove this
                             print(poo)
                     raise e
                 bins = hash_to_buckets(unique, self.bucket_limits, seed)
@@ -199,12 +201,15 @@ class Detector():
                 #Detection per seed, use mav method
                 # - Last iteration's bins -> last_histograms
                 if self.step > 1:
-                    last = np.copy(self.last_histograms[f, s, :])
-                    current = np.copy(histograms[f, s, :])
+                    before_last = np.copy(self.before_last_histograms[f, s, :])
+                    last        = np.copy(self.last_histograms[f, s, :])
+                    current     = np.copy(histograms[f, s, :])
                     if self.detection_rule == 'mav':
                         bins = self.mav_detection(self.mav[f], div, current, last)
                     elif self.detection_rule == 'flat':
                         bins = self.flat_detection(self.divs[f, s, 1], div, current, last)
+                    elif self.detection_rule == 'two_step':
+                        bins = self.two_step_detection(current, last, before_last)
                     else:
                         logging.error('Invalid detection rule')
                     flags[f][s] = bins
@@ -246,8 +251,9 @@ class Detector():
                 self.operational = True
 
         self.step += 1
-        self.last_histograms = histograms
-        self.last_bin_set    = bin_set
+        self.before_last_histograms = self.last_histograms
+        self.last_histograms        = histograms
+        self.last_bin_set           = bin_set
 
         sub_frames = []
         for det in detections:
@@ -306,6 +312,30 @@ class Detector():
             new_div = KL_divergence(current, last)
         return bins
 
+    def two_step_detection(self, current, last, before_last):
+        '''
+        Run two-step detection
+        Works like flat detection, comparing the diff of two KL computations
+        This can also detect negative diffs and will provide accurate flags
+        for bins beyond the first bin.
+
+        :param current: Current timestep histogram
+        :param last: Last timestep histogram
+        :param before_last: Histogram of timestep before last timestep
+        :return: Flagged bins
+        '''
+        new_div = KL_divergence(current, last)
+        last_div = KL_divergence(last, before_last)
+        bins = []
+        while np.abs(new_div - last_div) > self.thresh:
+            b = np.argmax(np.abs(last - current))
+            bins.append(b)
+            current[b]     = 0
+            last[b]        = 0
+            before_last[b] = 0
+            new_div = KL_divergence(current, last)
+            last_div = KL_divergence(last, before_last)
+        return bins
 
     def applyfilter(self, frame):
         '''
