@@ -6,7 +6,6 @@ Requires: settings.py with server, username and password parameters
 """
 from datetime import datetime, timedelta
 from elasticsearch import Elasticsearch, exceptions
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 import numpy as np
 import logging
@@ -27,7 +26,6 @@ class ElasticQuery(object):
         self.QUERY_SIZE = 10000
         self.es_index = es_index
         self.es_server = es_server
-        self.thread_pool = ThreadPoolExecutor(1)
 
         try:
             logger.debug('Initializing connection.')
@@ -46,7 +44,6 @@ class ElasticQuery(object):
         self.response_columns = ['hits.hits._source.flow.' + _ for _ in self.col_flow] + \
                                 ['hits.hits._source.node.' + _ for _ in self.col_node]
         self.response_filter = ['_scroll_id', 'hits.total.value', 'hits.hits._source.@timestamp'] + self.response_columns
-        self.lines_skipped = 0
 
     def query_time(self, start_time: datetime, window_size: timedelta):
         """
@@ -86,7 +83,6 @@ class ElasticQuery(object):
         """
         df_lst = []
         df_tmp = pd.DataFrame(columns=self.columns)
-        self.lines_skipped = 0
 
         response = self.client.search(index=self.es_index,
                                       body=query,
@@ -99,39 +95,24 @@ class ElasticQuery(object):
             logger.debug('No entries found.\n%s' % response)
             return df_tmp
 
-        # Process batches
+        lines_skipped = 0
         batches = int(np.ceil(n_flows/self.QUERY_SIZE))
         logger.debug('Processing %i flows.' % n_flows)
+        for batch in range(batches-1):
+            rows = []
+            for hit in response['hits']['hits']:
+                row = hit['_source'].get('flow', None)
+                if not row:
+                    lines_skipped += 1
+                    continue
+                row.update(hit['_source']['node'])
+                row.update({'timestamp': hit['_source']['@timestamp']})
+                rows.append(row)
+            df_lst.append(df_tmp.from_dict(rows))
+            response = self.client.scroll(scroll_id=scroll_id, scroll='2m', filter_path=self.response_filter)
 
-        # Add first response batch data to store
-        df_lst.append(df_tmp.from_dict(self._extract_data(response)))
-
-        # Submit following queries to queue
-        responses = [(self.thread_pool.submit(self.client.scroll,
-                                              scroll_id=scroll_id,
-                                              scroll='2m',
-                                              filter_path=self.response_filter))
-                     for _ in range(batches-1)]
-
-        # Process remaining data
-        for response in as_completed(responses):
-            data = self._extract_data(response.result())
-            df_lst.append(df_tmp.from_dict(data))
         logger.debug('Processed %i batches, skipped %i lines.' % (batches, self.lines_skipped))
-
         return pd.concat(df_lst, sort=False)
-
-    def _extract_data(self, response):
-        rows = []
-        for hit in response['hits']['hits']:
-            row = hit['_source'].get('flow', None)
-            if not row:
-                self.lines_skipped += 1
-                continue
-            row.update(hit['_source']['node'])
-            row.update({'timestamp': hit['_source']['@timestamp']})
-            rows.append(row)
-        return rows
 
 
 if __name__ == '__main__':
@@ -160,7 +141,7 @@ if __name__ == '__main__':
 
     t0 = time.time()
     eq = ElasticQuery(server, index, username, password)
-    df = eq.query_time(datetime(2019, 9, 2, 9, 0), timedelta(minutes=5))
+    df = eq.query_time(datetime(2019, 9, 2, 9, 0), timedelta(minutes=1))
     t1 = time.time() - t0
 
     print('Time Elapsed %.2f' % t1)
