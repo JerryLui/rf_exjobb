@@ -32,7 +32,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     det = Detector(
         name='Dummy',
         n_seeds=1,
-        n_bins=256,
+        n_bins=512,
         mav_steps=2,
         features=['src_addr', 'dst_addr'],
         filt=None,
