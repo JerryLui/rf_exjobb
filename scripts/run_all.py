@@ -33,6 +33,8 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     eq = ElasticQuery(server, index, username, password)
     dp = DetectorPool()
 
+    '''
+    #Protocol settings
     tcp_det = Detector(
         name='TCP',
         n_seeds=8,
@@ -63,6 +65,32 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     dp.add_detector(tcp_det)
     dp.add_detector(udp_det)
     dp.add_detector(icmp_det)
+    '''
+
+    src_dst = Detector(
+            name='src_dst',
+            n_seeds=8,
+            n_bins=512,
+            mav_steps=5, #Not used
+            features=['src_addr', 'dst_addr'],
+            filt=None,
+            thresh=0.3,
+            detection_rule='two_step'
+            )
+
+    int_ext = Detector(
+            name='int_ext',
+            n_seeds=8,
+            n_bins=512,
+            mav_steps=5, #Not used
+            features=['internal', 'external'],
+            filt=int_ext_filter,
+            thresh=0.3,
+            detection_rule='two_step'
+            )
+
+    dp.add(src_dst)
+    dp.add(int_ext)
 
     # Threading
     futures = []
