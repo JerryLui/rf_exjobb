@@ -45,6 +45,28 @@ class ElasticQuery(object):
                                 ['hits.hits._source.node.' + _ for _ in self.col_node]
         self.response_filter = ['_scroll_id', 'hits.total.value', 'hits.hits._source.@timestamp'] + self.response_columns
 
+    def query_unique(self, field, max_uniques=500):
+        """
+        Queries ElasticSearch for all unique entries in given field
+        :param field: field following 'hits.hits._source' [ex. flow.ip_protocol]
+        :param max_uniques: maximum number of uniques to return
+        :return:
+        """
+        query = \
+            {
+                'aggs': {
+                    'nodes': {
+                        'terms': {
+                            'field': field,
+                        }
+                    }
+                }
+            }
+
+        response = self._search(query, filter_response=False)
+        print('hello')
+        return response['']
+
     def query_time(self, start_time: datetime, window_size: timedelta):
         """
         Queries ElasticSearch server starting at start_time
@@ -84,11 +106,7 @@ class ElasticQuery(object):
         df_lst = []
         df_tmp = pd.DataFrame(columns=self.columns)
 
-        response = self.client.search(index=self.es_index,
-                                      body=query,
-                                      size=self.QUERY_SIZE,
-                                      scroll='2m',
-                                      filter_path=self.response_filter)
+        response = self._search(query)
         scroll_id = response['_scroll_id']
         n_flows = response['hits']['total']['value']
         if n_flows == 0:
@@ -109,17 +127,42 @@ class ElasticQuery(object):
                 row.update({'timestamp': hit['_source']['@timestamp']})
                 rows.append(row)
             df_lst.append(df_tmp.from_dict(rows))
-            response = self.client.scroll(scroll_id=scroll_id, scroll='2m', filter_path=self.response_filter)
+            response = self._scroll(scroll_id)
 
         logger.debug('Processed %i batches, skipped %i lines.' % (batches, lines_skipped))
         return pd.concat(df_lst, sort=False)
 
+    def _search(self, query, filter_response=True):
+        """
+        Wrapper for ElasticSearch search function
+
+        :param query: query body
+        :param filter_response:
+        :return:
+        """
+        response_filter = self.response_filter if filter_response else None
+        return self.client.search(index=self.es_index,
+                                  body=query,
+                                  size=self.QUERY_SIZE,
+                                  scroll='2m',
+                                  filter_path=response_filter)
+
+    def _scroll(self, scroll_id, filter_response=True):
+        """
+        Wrapper for ElasticSearch scroll function
+
+        :param scroll_id:
+        :param filter_response:
+        :return:
+        """
+        response_filter = self.response_filter if filter_response else None
+        return self.client.scroll(scroll_id=scroll_id,
+                                  scroll='2m',
+                                  filter_path=response_filter)
+
 
 if __name__ == '__main__':
     import time
-    # import sys  # Used for local imports
-    #
-    # sys.path.append("/home/jliu/rf_exjobb/scripts/")  # Configure
     from settings import *
 
     # Configuration parameters
@@ -140,8 +183,8 @@ if __name__ == '__main__':
     ul_logger.propagate = False
 
     t0 = time.time()
-    eq = ElasticQuery(server, index, username, password)
-    df = eq.query_time(datetime(2019, 9, 2, 9, 0), timedelta(minutes=1))
+    eq = ElasticQuery(server, 'elastiflow-3.5.1-2019.09.02', username, password)
+    eq.query_unique('node.ip_protocol')
     t1 = time.time() - t0
 
     print('Time Elapsed %.2f' % t1)
