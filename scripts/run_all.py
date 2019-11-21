@@ -89,8 +89,8 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             detection_rule='two_step'
             )
 
-    dp.add(src_dst)
-    dp.add(int_ext)
+    dp.add_detector(src_dst)
+    dp.add_detector(int_ext)
 
     # Threading
     futures = []
@@ -106,7 +106,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         results = dp.run_next_timestep(future.result())
         detections.append(results[0])
         detection_frames.append(results[1])
-        logger.debug(results)
+        logger.debug(' '.join([str(len(_)) for _ in results]))
 
     full_detections = pd.concat(detection_frames)
     pd.save(full_detections, 'output/detection_frame.pkl')
@@ -114,8 +114,12 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
 
 
 if __name__ == '__main__':
-    window_size = timedelta(minutes=5)
-    run(datetime(2019, 10, 28, 4, 0), datetime(2019, 10, 29, 4, 5), window_size)
+    try:
+        window_size = timedelta(minutes=15)
+        run(datetime(2019, 10, 28, 4, 0), datetime(2019, 10, 28, 6, 0), window_size)
+    except Exception as e:
+        logger.fatal(e, exc_info=True)
+    logger.debug('Finished')
 
 
 
