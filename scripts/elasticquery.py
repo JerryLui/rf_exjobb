@@ -69,7 +69,8 @@ class ElasticQuery(object):
         if response['timed_out']:
             logger.warning('Query timed out')
         else:
-            logger.debug('%i flows processed in %.2f seconds' % (response['hits']['total']['value'], response['took']))
+            logger.debug('%i flows processed in %.2f seconds' %
+                         (response['hits']['total']['value'], response['took']/1000))
             df_tmp = df_tmp.from_dict(response['aggregations']['nodes']['buckets'])
         return df_tmp
 

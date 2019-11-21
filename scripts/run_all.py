@@ -108,7 +108,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         detection_frames.append(results[1])
         logger.debug(results)
 
-    full_detections = pd.concat(deteciton_frames)
+    full_detections = pd.concat(detection_frames)
     pd.save(full_detections, 'output/detection_frame.pkl')
     pd.save(detection_list_to_df(detections), 'output/detections.pkl')
 
