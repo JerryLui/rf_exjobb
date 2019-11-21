@@ -89,8 +89,8 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             detection_rule='two_step'
             )
 
-    dp.add(src_dst)
-    dp.add(int_ext)
+    dp.add_detector(src_dst)
+    dp.add_detector(int_ext)
 
     # Threading
     futures = []
@@ -114,8 +114,8 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
 
 
 if __name__ == '__main__':
-    window_size = timedelta(minutes=5)
-    run(datetime(2019, 10, 28, 4, 0), datetime(2019, 10, 29, 4, 5), window_size)
+    window_size = timedelta(minutes=15)
+    run(datetime(2019, 10, 28, 4, 0), datetime(2019, 10, 28, 10, 0), window_size)
 
 
 
