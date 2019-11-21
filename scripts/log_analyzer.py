@@ -46,7 +46,7 @@ def analyze(read_file):
     cycle_times = cycle_times[1:]
     detection_times = detection_times[1:]
     
-    print('Finished:\t%s' % finished)
+    print('Done:\t%s' % finished)
     print('Total:\t%.2f min' % ((end_time - start_time).total_seconds()/60))
     print('\t%i batches' % len(batch_sizes))
 
