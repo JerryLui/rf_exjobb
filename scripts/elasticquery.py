@@ -71,6 +71,31 @@ class ElasticQuery(object):
         logger.debug('%i flows processed in %.2f seconds' % (response['hits']['total']['value'], response['took']/1000))
         return pd.DataFrame().from_dict(response['aggregations']['nodes']['buckets'])
 
+    def get_first_last(self):
+        """
+        :return: datetime objects of last and first timestamp for index
+        """
+        dates = []
+        for order in ['desc', 'asc']:
+            query = \
+                {
+                    "query": {
+                        "match_all": {}
+                    },
+                    "sort": [
+                        {
+                            "@timestamp": {
+                                "order": order
+                            }
+                        }
+                    ]
+                }
+            response = self._search(query, filter_response=False, size=1)
+            dates.append(datetime.strptime(response['hits']['hits'][0]['_source']['@timestamp'],
+                                           '%Y-%m-%dT%H:%M:%S.%fZ'))
+            # (dates[0] - dates[1]).total_seconds()/(60*60*24)
+        return dates
+
     def query_time(self, start_time: datetime, window_size: timedelta):
         """
         Queries ElasticSearch server starting at start_time
@@ -136,7 +161,7 @@ class ElasticQuery(object):
         logger.debug('Processed %i batches, skipped %i lines.' % (batches, lines_skipped))
         return pd.concat(df_lst, sort=False)
 
-    def _search(self, query, filter_response=True):
+    def _search(self, query, filter_response=True, size=None):
         """
         Wrapper for ElasticSearch search function
 
@@ -145,9 +170,10 @@ class ElasticQuery(object):
         :return:
         """
         response_filter = self.response_filter if filter_response else None
+        size = self.QUERY_SIZE if not size else size
         return self.client.search(index=self.es_index,
                                   body=query,
-                                  size=self.QUERY_SIZE,
+                                  size=size,
                                   scroll='2m',
                                   filter_path=response_filter)
 
@@ -188,7 +214,7 @@ if __name__ == '__main__':
 
     t0 = time.time()
     eq = ElasticQuery(server, 'elastiflow-3.5.1-2019*', username, password)
-    df = eq.query_unique('flow.ip_protocol')
+    df = eq.query_first_last()
     t1 = time.time() - t0
 
     print('Time Elapsed %.2f' % t1)
