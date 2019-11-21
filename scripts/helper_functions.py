@@ -57,14 +57,19 @@ def protocol_filter(proto):
     return p_filter
 
 def detection_list_to_df(det_list):
-    det_list = [d for d in sublist for sublist in det_list]
+    #det_list = [d for d in sublist for sublist in det_list]
+    flat = []
+    for sublist in det_list:
+        for det in sublist:
+            flat.append(det)
+
     detector = []
     operational = []
     feature = []
     value = []
     number = []
     timestep = []
-    for det in det_list:
+    for det in flat:
         detector.append(det.detector)
         operational.append(det.operational)
         feature.append(det.feature)
