@@ -114,8 +114,12 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
 
 
 if __name__ == '__main__':
-    window_size = timedelta(minutes=15)
-    run(datetime(2019, 10, 28, 4, 0), datetime(2019, 10, 28, 6, 0), window_size)
+    try:
+        window_size = timedelta(minutes=15)
+        run(datetime(2019, 10, 28, 4, 0), datetime(2019, 10, 28, 6, 0), window_size)
+    except Exception as e:
+        logger.fatal(e, exc_info=True)
+    logger.debug('Finished')
 
 
 

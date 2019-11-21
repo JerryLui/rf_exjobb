@@ -17,6 +17,7 @@ def analyze(read_file):
     batch_sizes = []
     batch_times = []
     start_time = None
+    finished = False
     for line in lines:
         line = line.rstrip().split()
         try:
@@ -27,13 +28,15 @@ def analyze(read_file):
             if not start_time:
                 start_time = log_time
 
-            if log_message not in ['Processed', 'Querying', 'Processing']:
+            if log_message not in ['Processed', 'Querying', 'Processing', 'Finished']:
                 detection_times.append((log_time - last_line_time).total_seconds())
             elif log_message == 'Processed':
                 cycle_times.append((log_time - last_time).total_seconds())
                 batch_times.append((log_time - last_line_time).total_seconds())
                 last_time = log_time
                 batch_sizes.append(int(line[5]))
+            elif log_message == 'Finished':
+                finished = True
             last_line_time = log_time
 
         except Exception as e:
@@ -43,6 +46,7 @@ def analyze(read_file):
     cycle_times = cycle_times[1:]
     detection_times = detection_times[1:]
     
+    print('Finished:\t%s' % finished)
     print('Total:\t%.2f min' % ((end_time - start_time).total_seconds()/60))
     print('\t%i batches' % len(batch_sizes))
 
