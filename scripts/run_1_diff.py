@@ -29,28 +29,47 @@ ul_logger.propagate = False
 def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     current_time = start_time
     eq = ElasticQuery(server, index, username, password)
-    det = Detector(
-        name='Dummy',
+    dp = DetectorPool()
+    
+    src_dst = Detector(
+        name='src_dst',
         n_seeds=1,
-        n_bins=512,
+        n_bins=1024,
         mav_steps=2,
         features=['src_addr', 'dst_addr'],
         filt=None,
         thresh=10
     )
+    int_ext = Detector(
+        name='int_ext',
+        n_seeds=1,
+        n_bins=1024,
+        mav_steps=2,
+        features=['internal', 'external'],
+        filt=int_ext_filter,
+        thresh=10
+        )
 
-    divs = []
+    dp.add_detector(src_dst)
+    dp.add_detector(int_ext)
+
+    src_dst_divs = []
+    int_ext_divs = []
 
     while current_time < end_time:
         frame = eq.query_time(current_time, window_size)
         #Do not care about results
-        det.run_next_timestep(frame)
-        divs.append(det.get_divs())
+        dp.run_next_timestep(frame)
+        
+        src_dst_divs.append(src_dst.get_divs())
+        int_ext_divs.append(int_ext.get_divs())
+        
         current_time += window_size
 
     #Merge all divs?
     final_divs = np.concatenate(divs)
-    np.save('output/1_diff_1_seed', divs)
+    np.save('output/src_dst_divs_15_1024', src_dst_divs)
+    np.save('output/int_ext_divs_15_1024', int_ext_divs)
     #Save as a pickle
 
 if __name__ == '__main__':
