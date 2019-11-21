@@ -59,7 +59,7 @@ def analyze(read_file):
     print('Median\t%.2f' % (np.median(cycle_times)))
 
     print('Detection Times')
-    print('Mean:\t%.2f' % (np.mean(detection_times)))
+    print('Max:\t%.2f' % (np.max(detection_times)))
     print('Median:\t%.2f' % (np.median(detection_times)))
 
 
