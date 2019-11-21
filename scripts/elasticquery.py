@@ -45,11 +45,10 @@ class ElasticQuery(object):
                                 ['hits.hits._source.node.' + _ for _ in self.col_node]
         self.response_filter = ['_scroll_id', 'hits.total.value', 'hits.hits._source.@timestamp'] + self.response_columns
 
-    def query_unique(self, field, max_uniques=500):
+    def query_unique(self, field):
         """
         Queries ElasticSearch for all unique entries in given field
-        :param field: field following 'hits.hits._source' [ex. flow.ip_protocol]
-        :param max_uniques: maximum number of uniques to return
+        :param field: field following 'hits.hits._source' [examples: flow.ip_protocol, node.hostname]
         :return:
         """
         query = \
@@ -63,9 +62,17 @@ class ElasticQuery(object):
                 }
             }
 
+        logger.debug('Querying uniques for field %s' % field)
         response = self._search(query, filter_response=False)
-        print('hello')
-        return response['']
+
+        df_tmp = pd.DataFrame(columns=[field, 'count'])
+        if response['timed_out']:
+            logger.warning('Query timed out')
+        else:
+            logger.debug('%i flows processed in %.2f seconds' %
+                         (response['hits']['total']['value'], response['took']/1000))
+            df_tmp = df_tmp.from_dict(response['aggregations']['nodes']['buckets'])
+        return df_tmp
 
     def query_time(self, start_time: datetime, window_size: timedelta):
         """
@@ -183,8 +190,8 @@ if __name__ == '__main__':
     ul_logger.propagate = False
 
     t0 = time.time()
-    eq = ElasticQuery(server, 'elastiflow-3.5.1-2019.09.02', username, password)
-    eq.query_unique('node.ip_protocol')
+    eq = ElasticQuery(server, 'elastiflow-3.5.1-2019*', username, password)
+    eq.query_unique('flow.ip_protocol')
     t1 = time.time() - t0
 
     print('Time Elapsed %.2f' % t1)
