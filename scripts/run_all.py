@@ -109,8 +109,8 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         logger.debug(' '.join([str(len(_)) for _ in results]))
 
     full_detections = pd.concat(detection_frames)
-    pd.save(full_detections, 'output/detection_frame.pkl')
-    pd.save(detection_list_to_df(detections), 'output/detections.pkl')
+    pd.to_pickle(full_detections, 'output/detection_frame.pkl')
+    pd.to_pickle(detection_list_to_df(detections), 'output/detections.pkl')
 
 
 if __name__ == '__main__':
