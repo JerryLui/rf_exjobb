@@ -65,14 +65,11 @@ class ElasticQuery(object):
         logger.debug('Querying uniques for field %s' % field)
         response = self._search(query, filter_response=False)
 
-        df_tmp = pd.DataFrame(columns=[field, 'count'])
         if response['timed_out']:
             logger.warning('Query timed out')
-        else:
-            logger.debug('%i flows processed in %.2f seconds' %
-                         (response['hits']['total']['value'], response['took']/1000))
-            df_tmp = df_tmp.from_dict(response['aggregations']['nodes']['buckets'])
-        return df_tmp
+            return pd.DataFrame()
+        logger.debug('%i flows processed in %.2f seconds' % (response['hits']['total']['value'], response['took']/1000))
+        return pd.DataFrame().from_dict(response['aggregations']['nodes']['buckets'])
 
     def query_time(self, start_time: datetime, window_size: timedelta):
         """
@@ -191,7 +188,7 @@ if __name__ == '__main__':
 
     t0 = time.time()
     eq = ElasticQuery(server, 'elastiflow-3.5.1-2019*', username, password)
-    eq.query_unique('flow.ip_protocol')
+    df = eq.query_unique('flow.ip_protocol')
     t1 = time.time() - t0
 
     print('Time Elapsed %.2f' % t1)
