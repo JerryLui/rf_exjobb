@@ -16,9 +16,10 @@ def analyze(read_file):
     detection_times = []
     batch_sizes = []
     batch_times = []
+    empty_respones = []
     start_time = None
     finished = False
-    for line in lines:
+    for i, line in enumerate(lines):
         line = line.rstrip().split()
         try:
             log_time = datetime.strptime(' '.join(line[:2]), '%m/%d/%Y %H:%M:%S,%f')
@@ -28,13 +29,15 @@ def analyze(read_file):
             if not start_time:
                 start_time = log_time
 
-            if log_message not in ['Processed', 'Querying', 'Processing', 'Finished']:
+            if log_message not in ['Processed', 'Querying', 'Processing', 'Finished', 'Entries']:
                 detection_times.append((log_time - last_line_time).total_seconds())
             elif log_message == 'Processed':
                 cycle_times.append((log_time - last_time).total_seconds())
                 batch_times.append((log_time - last_line_time).total_seconds())
                 last_time = log_time
                 batch_sizes.append(int(line[5]))
+            elif log_message == 'Entires':
+                empty_respones.append(lines[i-1])
             elif log_message == 'Finished':
                 finished = True
             last_line_time = log_time
@@ -49,6 +52,7 @@ def analyze(read_file):
     print('Done:\t%s' % finished)
     print('Total:\t%.2f min' % ((end_time - start_time).total_seconds()/60))
     print('\t%i batches' % len(batch_sizes))
+    print('\t%i empty' % len(empty_respones))
 
     print('Batch Sizes')
     print('Mean:\t%.2f' % (np.mean(batch_sizes)))
@@ -66,6 +70,9 @@ def analyze(read_file):
     print('Max:\t%.2f' % (np.max(detection_times)))
     print('Median:\t%.2f' % (np.median(detection_times)))
 
+    print('-'*20)
+    for empty_respone in empty_respones:
+        print(empty_respone)
 
     return structured_lines
 
