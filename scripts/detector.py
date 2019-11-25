@@ -11,12 +11,12 @@ from helper_functions import KL_divergence, hash_to_buckets, detection_list_to_d
 logger = logging.getLogger('rf_exjobb')
 
 class Detection():
-    '''
+    """
     Small wrapper for the information of a single detection.
-    '''
+    """
 
     def __init__(self, detector, operational, feature, value, number, timestep):
-        '''
+        """
         Detection object corresponding to a single detection from one Detector
 
         :param detector: Name of detector which found this value
@@ -25,7 +25,7 @@ class Detection():
         :param value: The value of the triggered feature
         :param number: The number of hash functions in which this value was contained in a flagged bin
         :param timestep: How many steps the detector has processed
-        '''
+        """
         self.detector    = detector
         self.operational = operational
         self.feature     = feature
