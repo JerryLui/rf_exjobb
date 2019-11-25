@@ -139,7 +139,7 @@ class ElasticQuery(object):
         scroll_id = response['_scroll_id']
         n_flows = response['hits']['total']['value']
         if n_flows == 0:
-            logger.debug('No entries found.\n%s' % response)
+            logger.warning('Entries not found.\n')
             return df_tmp
 
         lines_skipped = 0
@@ -214,7 +214,7 @@ if __name__ == '__main__':
 
     t0 = time.time()
     eq = ElasticQuery(server, 'elastiflow-3.5.1-2019*', username, password)
-    df = eq.query_first_last()
+    df = eq.get_first_last()
     t1 = time.time() - t0
 
     print('Time Elapsed %.2f' % t1)
