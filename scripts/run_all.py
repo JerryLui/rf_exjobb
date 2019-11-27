@@ -119,6 +119,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         detections.append(results[0])
         detection_frames.append(results[1])
         logger.debug(' '.join([str(len(_)) for _ in results]))
+        del future
 
     full_detections = pd.concat(detection_frames)
     pd.to_pickle(full_detections, 'output/detection_frame.pkl')
