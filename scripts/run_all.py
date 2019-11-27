@@ -115,13 +115,13 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     detections = []
     detection_frames = []
 
-    for future in as_completed(futures):
+    for i, future in enumerate(as_completed(futures)):
         results = dp.run_next_timestep(future.result())
         detections.append(results[0])
         detection_frames.append(results[1])
         logger.debug(' '.join([str(len(_)) for _ in results]))
 
-        del futures[future]
+        del futures[i]
 
     full_detections = pd.concat(detection_frames)
     pd.save(full_detections, 'output/detection_frame.pkl')
