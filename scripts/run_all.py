@@ -67,30 +67,42 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     dp.add_detector(icmp_det)
     '''
 
-    src_dst = Detector(
-            name='src_dst',
+    mav = Detector(
+            name='mav_ext',
             n_seeds=8,
-            n_bins=512,
-            mav_steps=5, #Not used
-            features=['src_addr', 'dst_addr'],
-            filt=None,
-            thresh=0.3,
-            detection_rule='two_step'
-            )
-
-    int_ext = Detector(
-            name='int_ext',
-            n_seeds=8,
-            n_bins=512,
-            mav_steps=5, #Not used
-            features=['internal', 'external'],
+            n_bins=1024,
+            mav_steps=5,
+            features=['external'],
             filt=int_ext_filter,
-            thresh=0.3,
+            thresh=0.94,
             detection_rule='two_step'
             )
 
-    dp.add_detector(src_dst)
-    dp.add_detector(int_ext)
+    flat = Detector(
+            name='flat_ext',
+            n_seeds=8,
+            n_bins=1024,
+            mav_steps=5, #Not used
+            features=['external'],
+            filt=int_ext_filter,
+            thresh=0.94,
+            detection_rule='flat'
+            )
+
+    two_step = Detector(
+            name='two_step_ext',
+            n_seeds=8,
+            n_bins=1024,
+            mav_steps=5, #Not used
+            features=['external'],
+            filt=int_ext_filter,
+            thresh=0.94,
+            detection_rule='two_step'
+            )
+
+    dp.add_detector(mav)
+    dp.add_detector(flat)
+    dp.add_detector(two_step)
 
     # Threading
     futures = []
@@ -117,7 +129,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
 if __name__ == '__main__':
     try:
         window_size = timedelta(minutes=15)
-        run(datetime(2019, 10, 28, 4, 0), datetime(2019, 10, 28, 6, 0), window_size)
+        run(datetime(2019, 11, 4, 0, 0), datetime(2019, 11, 7, 0, 0), window_size)
     except Exception as e:
         logger.fatal(e, exc_info=True)
     logger.debug('Finished')
