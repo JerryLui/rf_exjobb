@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import logging
 import sys
+import gc
 sys.path.append("/home/jliu/rf_exjobb/scripts/")  # Configure
 
 from elasticquery import ElasticQuery
@@ -29,6 +30,7 @@ ul_logger = logging.getLogger('urllib3.connectionpool')
 ul_logger.propagate = False
 
 
+@profile
 def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     current_time = start_time
     eq = ElasticQuery(server, index, username, password)
@@ -121,7 +123,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         detection_frames.append(results[1])
         logger.debug(' '.join([str(len(_)) for _ in results]))
 
-        del futures[i]
+        futures[i] = None
 
     full_detections = pd.concat(detection_frames)
     pd.to_pickle(full_detections, 'output/detection_frame.pkl')
