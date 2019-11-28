@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
+import pickle
 import numpy as np
 import logging
 import sys
@@ -36,76 +37,71 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     eq = ElasticQuery(server, index, username, password)
     dp = DetectorPool()
 
-    '''
-    #Protocol settings
-    tcp_det = Detector(
-        name='TCP',
-        n_seeds=8,
-        n_bins=256,
-        mav_steps=5,
-        features=['src_addr', 'dst_addr'],
-        filt=protocol_filter('TCP'),
-        thresh=0.1
-    )
-    udp_det = Detector(
-        name='UDP',
-        n_seeds=8,
-        n_bins=64,
-        mav_steps=5,
-        features=['src_addr', 'dst_addr'],
-        filt=protocol_filter('UDP'),
-        thresh=0.1
-    )
-    icmp_det = Detector(
-        name='ICMP',
-        n_seeds=8,
-        n_bins=16,
-        mav_steps=5,
-        features=['src_addr', 'dst_addr'],
-        filt=protocol_filter('ICMP'),
-        thresh=0.1
-    )
-    dp.add_detector(tcp_det)
-    dp.add_detector(udp_det)
-    dp.add_detector(icmp_det)
-    '''
-
-    mav = Detector(
-            name='mav_ext',
-            n_seeds=8,
+    one = Detector(
+            name='one',
+            n_seeds=10,
             n_bins=1024,
-            mav_steps=5,
             features=['external'],
             filt=int_ext_filter,
-            thresh=0.94,
+            thresh=0.31,
+            flag_th=5,
             detection_rule='two_step'
             )
 
-    flat = Detector(
-            name='flat_ext',
-            n_seeds=8,
+    one_half = Detector(
+            name='one_half',
+            n_seeds=10,
             n_bins=1024,
-            mav_steps=5, #Not used
             features=['external'],
             filt=int_ext_filter,
-            thresh=0.94,
-            detection_rule='flat'
-            )
-
-    two_step = Detector(
-            name='two_step_ext',
-            n_seeds=8,
-            n_bins=1024,
-            mav_steps=5, #Not used
-            features=['external'],
-            filt=int_ext_filter,
-            thresh=0.94,
+            thresh=0.46,
+            flag_th=5,
             detection_rule='two_step'
             )
 
-    dp.add_detector(mav)
-    dp.add_detector(flat)
-    dp.add_detector(two_step)
+    two = Detector(
+            name='two',
+            n_seeds=10,
+            n_bins=1024,
+            features=['external'],
+            filt=int_ext_filter,
+            thresh=0.62,
+            flag_th=5,
+            detection_rule='two_step'
+    )
+
+    two_half = Detector(
+            name='two_half',
+            n_seeds=10,
+            n_bins=1024,
+            features=['external'],
+            filt=int_ext_filter,
+            thresh=0.77,
+            flag_th=5,
+            detection_rule='two_step'
+    )
+
+    three = Detector(
+            name='three',
+            n_seeds=10,
+            n_bins=1024,
+            features=['external'],
+            filt=int_ext_filter,
+            thresh=0.93,
+            flag_th=5,
+            detection_rule='two_step'
+            )
+
+    dp.add_detector(one)
+    dp.add_detector(one_half)
+    dp.add_detector(two)
+    dp.add_detector(two_half)
+    dp.add_detector(three)
+
+    name_list = ['one', 'two', 'three', 'one_half', 'two_half']
+    max_dets = {}
+    for n in name_list:
+        max_dets[n] = []
 
     # Threading
     futures = []
@@ -125,9 +121,18 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
 
         futures[i] = None
 
+        # Ye this is shit
+        max_dets['one'].append(one.get_max_det())
+        max_dets['one_half'].append(one_half.get_max_det())
+        max_dets['two'].append(two.get_max_det())
+        max_dets['two_half'].append(one.get_max_det())
+        max_dets['three'].append(one.get_max_det())
+
     full_detections = pd.concat(detection_frames)
     pd.to_pickle(full_detections, 'output/detection_frame.pkl')
     pd.to_pickle(detection_list_to_df(detections), 'output/detections.pkl')
+    with open('output/max_dets.pkl', 'wb') as fp:
+        pickle.dump(max_dets, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':

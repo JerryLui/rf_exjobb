@@ -110,7 +110,7 @@ class Detector:
     """
 
     def __init__(self, name, n_seeds, n_bins,
-                 mav_steps, features, filt, thresh, detection_rule='mav', flag_th=6):
+                 features, filt, thresh, flag_th, detection_rule='mav', mav_steps=5):
         """
         The Detector analyzes some feature using DESCRIPTION
 
@@ -142,7 +142,7 @@ class Detector:
         self.step = 0
         self.divs = np.zeros((len(self.features), self.n_seeds, self.mav_steps))
         # divs is used to calculate mav for every timestep
-        self.mav  = np.zeros((len(self.features)))
+        self.mav = np.zeros((len(self.features)))
         self.last_histograms = None
         self.before_last_histograms = None
         # Need a way to save IP/bin pairs
@@ -189,12 +189,12 @@ class Detector:
 
                 for u, b, cnt in zip(unique, bins, counts):
                     histograms[f, s, b] += cnt
-                    bin_set[f][s][b].add(u) # Bin set to be used for extraction
+                    bin_set[f][s][b].add(u)  # Bin set to be used for extraction
 
                 # Calculate divergence, will be used in detection step
                 if self.last_histograms is not None:
                     div = KL_divergence(histograms[f, s, :],
-                            self.last_histograms[f, s, :])
+                                        self.last_histograms[f, s, :])
 
                     # This overwrites the old elements of rolling div array
                     self.divs[f, s, 0] = div
@@ -203,8 +203,8 @@ class Detector:
                 # - Last iteration's bins -> last_histograms
                 if self.step > 1:
                     before_last = np.copy(self.before_last_histograms[f, s, :])
-                    last        = np.copy(self.last_histograms[f, s, :])
-                    current     = np.copy(histograms[f, s, :])
+                    last = np.copy(self.last_histograms[f, s, :])
+                    current = np.copy(histograms[f, s, :])
                     if self.detection_rule == 'mav':
                         bins = self.mav_detection(self.mav[f], div, current, last)
                     elif self.detection_rule == 'flat':
@@ -288,7 +288,7 @@ class Detector:
         bins = []
         while (new_div - mav) > self.thresh and n < self.n_bins:
             b = np.argmax(np.abs(last - current))
-            bins.append(b) # Flag bin b
+            bins.append(b)  # Flag bin b
             # Detection has flagged bin b, now they may be ignored
             current[b] = 0
             last[b] = 0
@@ -378,4 +378,3 @@ class Detector:
         :return: Moving average of KL-divergence as of the last timestep
         """
         return self.mav
-
