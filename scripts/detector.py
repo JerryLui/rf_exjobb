@@ -10,7 +10,8 @@ from helper_functions import KL_divergence, hash_to_buckets, detection_list_to_d
 # Logging
 logger = logging.getLogger('rf_exjobb')
 
-class Detection():
+
+class Detection:
     """
     Small wrapper for the information of a single detection.
     """
@@ -26,17 +27,18 @@ class Detection():
         :param number: The number of hash functions in which this value was contained in a flagged bin
         :param timestep: How many steps the detector has processed
         """
-        self.detector    = detector
+        self.detector = detector
         self.operational = operational
-        self.feature     = feature
-        self.value       = value
-        self.number      = number
-        self.timestep    = timestep
+        self.feature = feature
+        self.value = value
+        self.number = number
+        self.timestep = timestep
 
     def __repr__(self):
         return '\n%s\t%s\t%s\t%s' % (self.detector, self.feature, self.value, self.number)
 
-class DetectorPool():
+
+class DetectorPool:
     '''
     A detector pool container which feeds the input dataframes forward to
     its detectors. When all data is consumed, the DetectorPool outputs
@@ -100,15 +102,16 @@ class DetectorPool():
             mavs[det.name] = det.get_mav()
         return mavs
 
-class Detector():
-    '''
+
+class Detector:
+    """
     A detector which takes a dataframe and filters it, then runs the
     detection algorithm on the subset.
-    '''
+    """
 
     def __init__(self, name, n_seeds, n_bins,
-            mav_steps, features, filt, thresh, detection_rule='mav', flag_th=6):
-        '''
+                 mav_steps, features, filt, thresh, detection_rule='mav', flag_th=6):
+        """
         The Detector analyzes some feature using DESCRIPTION
 
         :param name: Detector name
@@ -118,92 +121,85 @@ class Detector():
         :param features: List of features to aggregate and analyze
         :param filt: Filter function which is applied to every datafram befor analysis
         :param thresh: Threshold value for detection of KL-divergences compared to moving average 
-        '''
-        self.name         = name      #Name used in logging
-        self.n_seeds      = n_seeds   #Number of seeds for detector to use
-        self.n_bins       = n_bins    #Number of bins in histogram
-        self.mav_steps    = mav_steps    #Number of steps to take for the moving average
-        self.features     = features  #Which features to run detection on
-        #self.aggregations = []       #Feature/aggregation should probably be a pair
-        self.filt         = filt      #Filter function to apply to data before detect
-        self.thresh       = thresh    #KL Threshold for a detection
+        """
+        self.name = name      # Name used in logging
+        self.n_seeds = n_seeds   # Number of seeds for detector to use
+        self.n_bins = n_bins    # Number of bins in histogram
+        self.mav_steps = mav_steps  # Number of steps to take for the moving average
+        self.features = features  # Which features to run detection on
+        # self.aggregations = []      # Feature/aggregation should probably be a pair
+        self.filt = filt      # Filter function to apply to data before detect
+        self.thresh = thresh    # KL Threshold for a detection
 
-        self.detection_rule = detection_rule #Which detection rule to use
+        self.detection_rule = detection_rule  # Which detection rule to use
 
-        #Parameter-dependent initializations
+        # Parameter-dependent initializations
         self.seeds = np.random.choice(100000, size=self.n_seeds, replace=False)
         self.bucket_limits = [i for i in range(2**32//self.n_bins, 2**32, 2**32//self.n_bins)]
-        self.flag_th = flag_th #How many flags to include extracted
+        self.flag_th = flag_th  # How many flags to include extracted
 
-        #Non-parameter initializations
+        # Non-parameter initializations
         self.step = 0
         self.divs = np.zeros((len(self.features), self.n_seeds, self.mav_steps))
-        #divs is used to calculate mav for every timestep
+        # divs is used to calculate mav for every timestep
         self.mav  = np.zeros((len(self.features)))
         self.last_histograms = None
         self.before_last_histograms = None
-        #Need a way to save IP/bin pairs
+        # Need a way to save IP/bin pairs
         self.last_bin_set = None
-        #Max number of overlapping flags in last timestep
+        # Max number of overlapping flags in last timestep
         self.max_det = 0
 
-        #Bool to signify if detector is ready for detection
+        # Bool to signify if detector is ready for detection
         # (~mav steps have passed)
         self.operational = False
 
     def run_next_timestep(self, frame):
-        '''
+        """
         Runs the given dataframe as the next timestep
 
         :param frame: Pandas dataframe to analyze
         :returns: Tuple like (List of Detection objects, Dataframe containing all flows related to detection)
-        '''
+        """
         frame = self.applyfilter(frame)
 
         histograms = np.zeros((len(self.features), self.n_seeds, self.n_bins))
-        bin_set    = [[[set() for _ in range(self.n_bins)]
+        bin_set = [[[set() for _ in range(self.n_bins)]
                     for __ in range(self.n_seeds)] for ___ in self.features]
-        flags      = [[[]
-                    for __ in range(self.n_seeds)] for ___ in self.features]
-
+        flags = [[[]
+                  for __ in range(self.n_seeds)] for ___ in self.features]
 
         detections = []
 
-        #Roll divs for moving average calculations
+        # Roll divs for moving average calculations
         self.divs = np.roll(self.divs, 1, axis=2)
 
-        #Reset for this timestep
+        # Reset for this timestep
         self.max_det = 0
 
         for f, feat in enumerate(self.features):
-            #AGGREGATIONS ARE NOT IMPLEMENTED YET
+            # TODO: AGGREGATIONS ARE NOT IMPLEMENTED YET
 
             feat_series = frame[feat].to_numpy()
 
             for s, seed in enumerate(self.seeds):
-                try:
-                    unique, counts = np.unique(feat_series, return_counts=True)
-                except Exception as e:
-                    for poo in feat_series:
-                        if not type(poo) == str:
-                            #TODO: Remove this
-                            print(poo)
-                    raise e
+                unique, counts = np.unique(feat_series, return_counts=True)
+
                 bins = hash_to_buckets(unique, self.bucket_limits, seed)
 
                 for u, b, cnt in zip(unique, bins, counts):
                     histograms[f, s, b] += cnt
-                    bin_set[f][s][b].add(u) #Bin set to be used for extraction
+                    bin_set[f][s][b].add(u) # Bin set to be used for extraction
 
-                #Calculate divergence, will be used in detection step
+                # Calculate divergence, will be used in detection step
                 if self.last_histograms is not None:
                     div = KL_divergence(histograms[f, s, :],
                             self.last_histograms[f, s, :])
 
-                    #This overwrites the old elements of rolling div array
+                    # This overwrites the old elements of rolling div array
                     self.divs[f, s, 0] = div
 
-                #Detection per seed, use mav method
+                # Detection per seed, use mav method
                 # - Last iteration's bins -> last_histograms
                 if self.step > 1:
                     before_last = np.copy(self.before_last_histograms[f, s, :])
@@ -219,9 +215,9 @@ class Detector():
                         logging.error('Invalid detection rule')
                     flags[f][s] = bins
 
-            #Extraction must also be done on this level
+            # Extraction must also be done on this level
 
-            #Check number of detected seeds
+            # Check number of detected seeds
             n_flags = sum([1 for s in flags[f] if s])
             total_dict = {}
             if n_flags >= self.flag_th:
@@ -249,7 +245,7 @@ class Detector():
                                 )
                         detections.append(detection)
 
-            #Save to some results list ish
+            # Save to some results list ish
 
             if self.step < self.mav_steps:
                 self.mav[f] = np.sum(self.divs[f, :, :]) / ((self.step + 1) * self.n_seeds)
@@ -259,8 +255,8 @@ class Detector():
 
         self.step += 1
         self.before_last_histograms = self.last_histograms
-        self.last_histograms        = histograms
-        self.last_bin_set           = bin_set
+        self.last_histograms = histograms
+        self.last_bin_set = bin_set
 
         sub_frames = []
         for det in detections:
@@ -275,10 +271,10 @@ class Detector():
         else:
             detection_frame = pd.DataFrame()
 
-        return (detections, detection_frame)
+        return detections, detection_frame
 
     def mav_detection(self, mav, div, current, last):
-        '''
+        """
         Run moving average detection
 
         :param mav: The current moving average to compare to
@@ -286,32 +282,33 @@ class Detector():
         :param current: Current histogram to compare
         :param last: Last histogram to compare
         :return: Bins which trigger the moving average detectiuon rule
-        '''
+        """
         new_div = div
         n = 0
         bins = []
         while (new_div - mav) > self.thresh and n < self.n_bins:
             b = np.argmax(np.abs(last - current))
-            bins.append(b) #Flag bin b
-            #Detection has flagged bin b, now they may be ignored
+            bins.append(b) # Flag bin b
+            # Detection has flagged bin b, now they may be ignored
             current[b] = 0
-            last[b]    = 0
+            last[b] = 0
             new_div = KL_divergence(current, last)
             n += 1
         return bins
 
     def flat_detection(self, last_div, div, current, last):
-        '''
+        """
         Run flat value detection
 
+        :param last_div: The KL divergence of the last step
         :param div: KL-divergence for current timestep (only supplied to not recalculate)
         :param current: Current histogram to compare
         :param last: Last histogram to compare
         :return: Bins which trigger the flat detection rule
-        '''
+        """
         new_div = div
         bins = []
-        #For now, only detect positive
+        # For now, only detect positive
         while (new_div - last_div) > self.thresh:
             b = np.argmax(np.abs(last - current))
             bins.append(b)
@@ -320,7 +317,7 @@ class Detector():
         return bins
 
     def two_step_detection(self, current, last, before_last):
-        '''
+        """
         Run two-step detection
         Works like flat detection, comparing the diff of two KL computations
         This can also detect negative diffs and will provide accurate flags
@@ -330,56 +327,55 @@ class Detector():
         :param last: Last timestep histogram
         :param before_last: Histogram of timestep before last timestep
         :return: Flagged bins
-        '''
+        """
         new_div = KL_divergence(current, last)
         last_div = KL_divergence(last, before_last)
         bins = []
         while np.abs(new_div - last_div) > self.thresh:
             b = np.argmax(np.abs(last - current))
             bins.append(b)
-            current[b]     = 0
-            last[b]        = 0
+            current[b] = 0
+            last[b] = 0
             before_last[b] = 0
             new_div = KL_divergence(current, last)
             last_div = KL_divergence(last, before_last)
         return bins
 
     def applyfilter(self, frame):
-        '''
+        """
         Apply the filter function self.filt to an input dataframe
 
         :param frame: Frame to run through filter
         :return: Filtered frame
-        '''
+        """
         if self.filt is None:
             return frame
         else:
             return self.filt(frame)
 
     def get_divs(self):
-        '''
+        """
         Returns divs for plotting
         The 1 index is needed, as roll happens at the end of every iteration
 
         :return: KL-divergences of last timestep
-        '''
+        """
         return self.divs[:, :, 0]
 
-
     def get_max_det(self):
-        '''
+        """
         Returns the maximum number of flagged bins where a single value is present
         in the last timestep
 
         :return: Max number of flagged bins with single value
-        '''
+        """
         return self.max_det
 
     def get_mav(self):
-        '''
+        """
         Return the current moving average for plotting
 
         :return: Moving average of KL-divergence as of the last timestep
-        '''
+        """
         return self.mav
 
