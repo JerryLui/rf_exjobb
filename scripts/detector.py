@@ -107,7 +107,7 @@ class Detector():
     '''
 
     def __init__(self, name, n_seeds, n_bins,
-            mav_steps, features, filt, thresh, detection_rule='mav'):
+            mav_steps, features, filt, thresh, detection_rule='mav', flag_th=6):
         '''
         The Detector analyzes some feature using DESCRIPTION
 
@@ -133,7 +133,7 @@ class Detector():
         #Parameter-dependent initializations
         self.seeds = np.random.choice(100000, size=self.n_seeds, replace=False)
         self.bucket_limits = [i for i in range(2**32//self.n_bins, 2**32, 2**32//self.n_bins)]
-        self.flag_th = self.n_seeds - 2 #How many flags to include extracted
+        self.flag_th = flag_th #How many flags to include extracted
 
         #Non-parameter initializations
         self.step = 0
@@ -144,6 +144,8 @@ class Detector():
         self.before_last_histograms = None
         #Need a way to save IP/bin pairs
         self.last_bin_set = None
+        #Max number of overlapping flags in last timestep
+        self.max_det = 0
 
         #Bool to signify if detector is ready for detection
         # (~mav steps have passed)
@@ -169,6 +171,9 @@ class Detector():
 
         #Roll divs for moving average calculations
         self.divs = np.roll(self.divs, 1, axis=2)
+
+        #Reset for this timestep
+        self.max_det = 0
 
         for f, feat in enumerate(self.features):
             #AGGREGATIONS ARE NOT IMPLEMENTED YET
@@ -231,6 +236,8 @@ class Detector():
                             else:
                                 total_dict[value] = 1
                 for (k, v) in total_dict.items():
+                    if v > self.max_det:
+                        self.max_det = v
                     if v >= self.flag_th:
                         detection = Detection(
                                 detector=self.name,
@@ -357,6 +364,16 @@ class Detector():
         :return: KL-divergences of last timestep
         '''
         return self.divs[:, :, 0]
+
+
+    def get_max_det(self):
+        '''
+        Returns the maximum number of flagged bins where a single value is present
+        in the last timestep
+
+        :return: Max number of flagged bins with single value
+        '''
+        return self.max_det
 
     def get_mav(self):
         '''
