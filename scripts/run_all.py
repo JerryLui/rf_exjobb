@@ -128,8 +128,8 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         # max_dets['one'].append(one.get_max_det())
         max_dets['one_half'].append(one_half.get_max_det())
         max_dets['two'].append(two.get_max_det())
-        max_dets['two_half'].append(one.get_max_det())
-        max_dets['three'].append(one.get_max_det())
+        max_dets['two_half'].append(two_half.get_max_det())
+        max_dets['three'].append(three.get_max_det())
 
     full_detections = pd.concat(detection_frames)
     pd.to_pickle(full_detections, 'output/detection_frame.pkl')
