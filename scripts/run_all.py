@@ -37,68 +37,71 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     eq = ElasticQuery(server, index, username, password)
     dp = DetectorPool()
 
+    '''
     one = Detector(
             name='one',
-            n_seeds=10,
+            n_seeds=8,
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
             thresh=0.31,
-            flag_th=5,
+            flag_th=6,
             detection_rule='two_step'
             )
+            '''
 
     one_half = Detector(
             name='one_half',
-            n_seeds=10,
+            n_seeds=8,
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
             thresh=0.46,
-            flag_th=5,
+            flag_th=6,
             detection_rule='two_step'
             )
 
     two = Detector(
             name='two',
-            n_seeds=10,
+            n_seeds=8,
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
             thresh=0.62,
-            flag_th=5,
+            flag_th=6,
             detection_rule='two_step'
     )
 
     two_half = Detector(
             name='two_half',
-            n_seeds=10,
+            n_seeds=8,
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
             thresh=0.77,
-            flag_th=5,
+            flag_th=6,
             detection_rule='two_step'
     )
 
     three = Detector(
             name='three',
-            n_seeds=10,
+            n_seeds=8,
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
             thresh=0.93,
-            flag_th=5,
+            flag_th=6,
             detection_rule='two_step'
             )
 
-    dp.add_detector(one)
+    # dp.add_detector(one)
     dp.add_detector(one_half)
     dp.add_detector(two)
     dp.add_detector(two_half)
     dp.add_detector(three)
 
-    name_list = ['one', 'two', 'three', 'one_half', 'two_half']
+    # name_list = ['one', 'two', 'three', 'one_half', 'two_half']
+    name_list = ['two', 'three', 'one_half', 'two_half']
     max_dets = {}
     for n in name_list:
         max_dets[n] = []
@@ -122,7 +125,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         futures[i] = None
 
         # Ye this is shit
-        max_dets['one'].append(one.get_max_det())
+        # max_dets['one'].append(one.get_max_det())
         max_dets['one_half'].append(one_half.get_max_det())
         max_dets['two'].append(two.get_max_det())
         max_dets['two_half'].append(one.get_max_det())
@@ -138,7 +141,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
 if __name__ == '__main__':
     try:
         window_size = timedelta(minutes=15)
-        run(datetime(2019, 11, 4, 0, 0), datetime(2019, 11, 7, 0, 0), window_size)
+        run(datetime(2019, 11, 4, 0, 0), datetime(2019, 11, 5, 0, 0), window_size)
     except Exception as e:
         logger.fatal(e, exc_info=True)
     logger.debug('Finished')
