@@ -48,6 +48,7 @@ class ElasticQuery(object):
     def query_unique(self, field):
         """
         Queries ElasticSearch for all unique entries in given field
+
         :param field: field following 'hits.hits._source' [examples: flow.ip_protocol, node.hostname]
         :return:
         """
@@ -125,6 +126,42 @@ class ElasticQuery(object):
         logger.debug('Querying time %s' % time_current.isoformat())
         return self._query_data(query)
 
+    def query_ip(self, ip, start_time: datetime, end_time: datetime, src=True):
+        """
+        Queries ElasticSearch server for src/dst ip/cidr in given time range
+
+        :param ip: ip, cidr notation acceptable [ex. 192.168.1.1/16]
+        :param start_time: start time in range
+        :param end_time: end time in range
+        :param src: lookup in src_addr/dst_addr
+        :return: dataframe with results
+        """
+        time_start = start_time
+        time_end = end_time
+
+        flow_feature = 'flow.src_addr' if src else 'flow.dst_addr'
+
+        query = \
+            {'query':
+                 {'bool':
+                      {'filter':
+                           [{'term':
+                                {flow_feature: ip}
+                           },
+                               {'range':
+                                    {'@timestamp':
+                                         {'gte': time_start.isoformat(),
+                                          'lt': time_end.isoformat()}
+                                     }
+                                }
+                           ]
+                      }
+                  }
+             }
+
+        logger.debug('Querying ip %s in time %s' % (ip, time_start.isoformat()))
+        return self._query_data(query)
+
     def _query_data(self, query):
         """
         Queries ElasticSearch server with given query body, saves result to file if a path is given
@@ -159,7 +196,7 @@ class ElasticQuery(object):
             response = self._scroll(scroll_id)
 
         logger.debug('Processed %i batches, skipped %i lines.' % (batches, lines_skipped))
-        return pd.concat(df_lst, sort=False)
+        return pd.concat(df_lst, sort=False, ignore_index=True)
 
     def _search(self, query, filter_response=True, size=None):
         """
@@ -214,7 +251,7 @@ if __name__ == '__main__':
 
     t0 = time.time()
     eq = ElasticQuery(server, 'elastiflow-3.5.1-2019*', username, password)
-    df = eq.get_first_last()
+    df = eq.query_ip('192.168.1.1/16', datetime(2019, 11, 5, 10, 0), datetime(2019, 11, 5, 10, 5))
     t1 = time.time() - t0
 
     print('Time Elapsed %.2f' % t1)
