@@ -36,6 +36,17 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     eq = ElasticQuery(server, index, username, password)
     dp = DetectorPool()
 
+    one_half = Detector(
+        name='one_half',
+        n_seeds=8,
+        n_bins=1024,
+        features=['external'],
+        filt=int_ext_filter,
+        thresh=0.46,
+        flag_th=6,
+        detection_rule='two_step'
+    )
+
     two = Detector(
             name='two',
             n_seeds=8,
@@ -70,13 +81,13 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             )
 
     # dp.add_detector(one)
-    # dp.add_detector(one_half)
+    dp.add_detector(one_half)
     dp.add_detector(two)
     dp.add_detector(two_half)
     dp.add_detector(three)
 
     # name_list = ['one', 'two', 'three', 'one_half', 'two_half']
-    name_list = ['two', 'three', 'two_half']
+    name_list = ['two', 'three', 'two_half', 'one_half']
     max_dets = {}
     for n in name_list:
         max_dets[n] = []
@@ -103,7 +114,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
 
         # Ye this is shit
         # max_dets['one'].append(one.get_max_det())
-        # max_dets['one_half'].append(one_half.get_max_det())
+        max_dets['one_half'].append(one_half.get_max_det())
         max_dets['two'].append(two.get_max_det())
         max_dets['two_half'].append(two_half.get_max_det())
         max_dets['three'].append(three.get_max_det())
