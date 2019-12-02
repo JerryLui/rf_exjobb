@@ -35,19 +35,19 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         name='src_dst',
         n_seeds=1,
         n_bins=1024,
-        mav_steps=2,
         features=['src_addr', 'dst_addr'],
         filt=None,
-        thresh=10
+        thresh=10,
+        flag_th=1
     )
     int_ext = Detector(
         name='int_ext',
         n_seeds=1,
         n_bins=1024,
-        mav_steps=2,
         features=['internal', 'external'],
         filt=int_ext_filter,
-        thresh=10
+        thresh=10,
+        flag_th=1
         )
 
     dp.add_detector(src_dst)
