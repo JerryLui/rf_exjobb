@@ -31,7 +31,6 @@ ul_logger = logging.getLogger('urllib3.connectionpool')
 ul_logger.propagate = False
 
 
-@profile
 def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     current_time = start_time
     eq = ElasticQuery(server, index, username, password)
