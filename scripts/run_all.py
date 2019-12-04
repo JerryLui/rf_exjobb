@@ -37,29 +37,16 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     eq = ElasticQuery(server, index, username, password)
     dp = DetectorPool()
 
-    '''
-    one = Detector(
-            name='one',
-            n_seeds=8,
-            n_bins=1024,
-            features=['external'],
-            filt=int_ext_filter,
-            thresh=0.31,
-            flag_th=6,
-            detection_rule='two_step'
-            )
-            '''
-
     one_half = Detector(
-            name='one_half',
-            n_seeds=8,
-            n_bins=1024,
-            features=['external'],
-            filt=int_ext_filter,
-            thresh=0.46,
-            flag_th=6,
-            detection_rule='two_step'
-            )
+        name='one_half',
+        n_seeds=8,
+        n_bins=1024,
+        features=['external'],
+        filt=int_ext_filter,
+        thresh=0.46,
+        flag_th=6,
+        detection_rule='two_step'
+    )
 
     two = Detector(
             name='two',
@@ -101,7 +88,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     dp.add_detector(three)
 
     # name_list = ['one', 'two', 'three', 'one_half', 'two_half']
-    name_list = ['two', 'three', 'one_half', 'two_half']
+    name_list = ['two', 'three', 'two_half', 'one_half']
     max_dets = {}
     for n in name_list:
         max_dets[n] = []
@@ -115,6 +102,8 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
 
     detections = []
     detection_frames = []
+
+    ext_divs = []
 
     for i, future in enumerate(as_completed(futures)):
         results = dp.run_next_timestep(future.result())
@@ -131,11 +120,15 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         max_dets['two_half'].append(two_half.get_max_det())
         max_dets['three'].append(three.get_max_det())
 
+        ext_divs.append(three.get_divs())
+
     full_detections = pd.concat(detection_frames)
     pd.to_pickle(full_detections, 'output/detection_frame.pkl')
     pd.to_pickle(detection_list_to_df(detections), 'output/detections.pkl')
     with open('output/max_dets.pkl', 'wb') as fp:
         pickle.dump(max_dets, fp, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('output/ext_divs.pkl', 'wb') as fp:
+        pickle.dump(ext_divs, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
