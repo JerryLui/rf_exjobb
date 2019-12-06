@@ -31,21 +31,20 @@ ul_logger = logging.getLogger('urllib3.connectionpool')
 ul_logger.propagate = False
 
 
-@profile
 def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     current_time = start_time
     eq = ElasticQuery(server, index, username, password)
     dp = DetectorPool()
 
     one_half = Detector(
-        name='one_half',
-        n_seeds=8,
-        n_bins=1024,
-        features=['external'],
-        filt=int_ext_filter,
-        thresh=0.46,
-        flag_th=6,
-        detection_rule='two_step'
+            name='one_half',
+            n_seeds=8,
+            n_bins=1024,
+            features=['external'],
+            filt=int_ext_filter,
+            thresh=0.13,
+            flag_th=6,
+            detection_rule='two_step'
     )
 
     two = Detector(
@@ -54,7 +53,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
-            thresh=0.62,
+            thresh=0.17,
             flag_th=6,
             detection_rule='two_step'
     )
@@ -65,7 +64,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
-            thresh=0.77,
+            thresh=0.21,
             flag_th=6,
             detection_rule='two_step'
     )
@@ -76,7 +75,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
-            thresh=0.93,
+            thresh=0.25,
             flag_th=6,
             detection_rule='two_step'
             )
@@ -123,18 +122,19 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         ext_divs.append(three.get_divs())
 
     full_detections = pd.concat(detection_frames)
-    pd.to_pickle(full_detections, 'output/detection_frame.pkl')
-    pd.to_pickle(detection_list_to_df(detections), 'output/detections.pkl')
-    with open('output/max_dets.pkl', 'wb') as fp:
+    pd.to_pickle(full_detections, 'output/detection_frame_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size))
+    pd.to_pickle(detection_list_to_df(detections), 'output/detections_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size))
+    with open('output/max_dets_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size), 'wb') as fp:
         pickle.dump(max_dets, fp, protocol=pickle.HIGHEST_PROTOCOL)
-    with open('output/ext_divs.pkl', 'wb') as fp:
+    with open('output/ext_divs_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size), 'wb') as fp:
         pickle.dump(ext_divs, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
     try:
         window_size = timedelta(minutes=15)
-        run(datetime(2019, 11, 4, 0, 0), datetime(2019, 11, 5, 0, 0), window_size)
+        # Earliest 2019,11,05
+        run(datetime(2019, 11, 11, 0, 0), datetime(2019, 10, 16, 0, 0), window_size)
     except Exception as e:
         logger.fatal(e, exc_info=True)
     logger.debug('Finished')

@@ -75,5 +75,5 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
 
 if __name__ == '__main__':
     window_size = timedelta(minutes=15)
-    run(datetime(2019, 11, 5, 0, 0), datetime(2019, 11, 5, 0, 0), window_size)
+    run(datetime(2019, 11, 5, 0, 0), datetime(2019, 11, 6, 0, 0), window_size)
 
