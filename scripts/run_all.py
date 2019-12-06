@@ -122,8 +122,12 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         ext_divs.append(three.get_divs())
 
     full_detections = pd.concat(detection_frames)
-    pd.to_pickle(full_detections, 'output/detection_frame_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size))
-    pd.to_pickle(detection_list_to_df(detections), 'output/detections_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size))
+    pd.to_pickle(full_detections, 'output/detection_frame_{}-{}_{}.pkl'.format(start_time.day,
+                                                                               start_time.month,
+                                                                               int(window_size.total_seconds()/60)))
+    pd.to_pickle(detection_list_to_df(detections), 'output/detections_{}-{}_{}.pkl'.format(start_time.day,
+                                                                                           start_time.month,
+                                                                                           int(window_size.total_seconds()/60)))
     with open('output/max_dets_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size), 'wb') as fp:
         pickle.dump(max_dets, fp, protocol=pickle.HIGHEST_PROTOCOL)
     with open('output/ext_divs_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size), 'wb') as fp:
