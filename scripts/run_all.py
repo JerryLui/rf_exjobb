@@ -31,7 +31,6 @@ ul_logger = logging.getLogger('urllib3.connectionpool')
 ul_logger.propagate = False
 
 
-@profile
 def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     current_time = start_time
     eq = ElasticQuery(server, index, username, password)
@@ -134,7 +133,8 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
 if __name__ == '__main__':
     try:
         window_size = timedelta(minutes=15)
-        run(datetime(2019, 11, 4, 0, 0), datetime(2019, 11, 5, 0, 0), window_size)
+        # Earliest 2019,11,05
+        run(datetime(2019, 11, 11, 0, 0), datetime(2019, 10, 16, 0, 0), window_size)
     except Exception as e:
         logger.fatal(e, exc_info=True)
     logger.debug('Finished')

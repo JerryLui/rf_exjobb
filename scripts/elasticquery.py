@@ -194,6 +194,7 @@ class ElasticQuery(object):
                 rows.append(row)
             df_lst.append(df_tmp.from_dict(rows))
             response = self._scroll(scroll_id)
+        self.client.clear_scroll(scroll_id)     # Clear Scroll after Finish
 
         logger.debug('Processed %i batches, skipped %i lines.' % (batches, lines_skipped))
         return pd.concat(df_lst, sort=False, ignore_index=True)
