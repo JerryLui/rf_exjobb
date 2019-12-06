@@ -74,7 +74,7 @@ class ElasticQuery(object):
 
     def get_first_last(self):
         """
-        :return: datetime objects of last and first timestamp for index
+        :return: (date_last, date_first, total_hits)
         """
         dates = []
         for order in ['desc', 'asc']:
@@ -94,8 +94,9 @@ class ElasticQuery(object):
             response = self._search(query, filter_response=False, size=1)
             dates.append(datetime.strptime(response['hits']['hits'][0]['_source']['@timestamp'],
                                            '%Y-%m-%dT%H:%M:%S.%fZ'))
+            total_hits = response['hits']['total']['value']
             # (dates[0] - dates[1]).total_seconds()/(60*60*24)
-        return dates
+        return dates[0], dates[1], total_hits
 
     def query_time(self, start_time: datetime, window_size: timedelta):
         """
