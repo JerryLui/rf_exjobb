@@ -122,26 +122,28 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         ext_divs.append(three.get_divs())
 
     full_detections = pd.concat(detection_frames)
+    window_size_fmt = int(window_size.total_seconds()/60)
     pd.to_pickle(full_detections, 'output/detection_frame_{}-{}_{}.pkl'.format(start_time.day,
                                                                                start_time.month,
-                                                                               int(window_size.total_seconds()/60)))
+                                                                               window_size_fmt))
     pd.to_pickle(detection_list_to_df(detections), 'output/detections_{}-{}_{}.pkl'.format(start_time.day,
                                                                                            start_time.month,
-                                                                                           int(window_size.total_seconds()/60)))
-    with open('output/max_dets_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size), 'wb') as fp:
+                                                                                           window_size_fmt))
+    with open('output/max_dets_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size_fmt), 'wb') as fp:
         pickle.dump(max_dets, fp, protocol=pickle.HIGHEST_PROTOCOL)
-    with open('output/ext_divs_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size), 'wb') as fp:
+    with open('output/ext_divs_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size_fmt), 'wb') as fp:
         pickle.dump(ext_divs, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
     try:
-        window_size = timedelta(minutes=15)
+        window_size = timedelta(minutes=5)
         # Earliest 30 days before today
-        run(datetime(2019, 11, 26, 0, 0), datetime(2019, 11, 27, 0, 0), window_size)
-        run(datetime(2019, 11, 27, 0, 0), datetime(2019, 11, 28, 0, 0), window_size)
-        run(datetime(2019, 11, 28, 0, 0), datetime(2019, 11, 29, 0, 0), window_size)
-        run(datetime(2019, 11, 29, 0, 0), datetime(2019, 11, 30, 0, 0), window_size)
+        run(datetime(2019, 11, 25, 0, 0), datetime(2019, 11, 26, 0, 0), window_size)
+        # run(datetime(2019, 11, 26, 0, 0), datetime(2019, 11, 27, 0, 0), window_size)
+        # run(datetime(2019, 11, 27, 0, 0), datetime(2019, 11, 28, 0, 0), window_size)
+        # run(datetime(2019, 11, 28, 0, 0), datetime(2019, 11, 29, 0, 0), window_size)
+        # run(datetime(2019, 11, 29, 0, 0), datetime(2019, 11, 30, 0, 0), window_size)
     except Exception as e:
         logger.fatal(e, exc_info=True)
     logger.debug('Finished')
