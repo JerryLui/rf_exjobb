@@ -162,11 +162,8 @@ if __name__ == '__main__':
     try:
         window_size = timedelta(minutes=5)
         # Earliest 30 days before today
-        run(datetime(2019, 11, 25, 0, 0), datetime(2019, 11, 26, 0, 0), window_size)
-        # run(datetime(2019, 11, 26, 0, 0), datetime(2019, 11, 27, 0, 0), window_size)
-        # run(datetime(2019, 11, 27, 0, 0), datetime(2019, 11, 28, 0, 0), window_size)
-        # run(datetime(2019, 11, 28, 0, 0), datetime(2019, 11, 29, 0, 0), window_size)
-        # run(datetime(2019, 11, 29, 0, 0), datetime(2019, 11, 30, 0, 0), window_size)
+        for i in range(2, 7):
+            run(datetime(2019, 12, i, 0, 0), datetime(2019, 12, i+1, 0, 0), window_size)
     except Exception as e:
         logger.fatal(e, exc_info=True)
     logger.debug('Finished')
