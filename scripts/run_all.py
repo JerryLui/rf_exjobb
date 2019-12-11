@@ -112,7 +112,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     name_list = []
     for detector in detectors:
         dp.add_detector(detector)
-        name_list.append(detector,name)
+        name_list.append(detector.name)
 
     max_dets = {}
     for n in name_list:
