@@ -220,9 +220,10 @@ class Detector:
             # Check number of detected seeds
             n_flags = sum([1 for s in flags[f] if s])
             total_dict = {}
-            if n_flags >= 100:
-                logging.error('Flags exceeding 100')
-            if n_flags >= self.flag_th and n_flags < 100:
+            FLAG_LIMIT = 25
+            if n_flags >= FLAG_LIMIT:
+                logging.error('Flags exceeding {} in detector {}'.format(FLAG_LIMIT, self.name))
+            if n_flags >= self.flag_th and n_flags < FLAG_LIMIT:
                 for s, seed in enumerate(self.seeds):
                     flag_bins = flags[f][s]
                     for b in flag_bins:
