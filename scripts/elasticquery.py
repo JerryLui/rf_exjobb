@@ -213,7 +213,7 @@ class ElasticQuery(object):
         return self.client.search(index=self.es_index,
                                   body=query,
                                   size=size,
-                                  scroll='2m',
+                                  scroll='1m',
                                   filter_path=response_filter)
 
     def _scroll(self, scroll_id, filter_response=True):
@@ -226,7 +226,7 @@ class ElasticQuery(object):
         """
         response_filter = self.response_filter if filter_response else None
         return self.client.scroll(scroll_id=scroll_id,
-                                  scroll='2m',
+                                  scroll='1m',
                                   filter_path=response_filter)
 
 
@@ -253,9 +253,11 @@ if __name__ == '__main__':
 
     t0 = time.time()
     eq = ElasticQuery(server, 'elastiflow-3.5.1-2019*', username, password)
-    df = eq.query_ip('192.168.1.1/16', datetime(2019, 11, 5, 10, 0), datetime(2019, 11, 5, 10, 5))
+    # df = eq.query_ip('192.168.1.1/16', datetime(2019, 11, 5, 10, 0), datetime(2019, 11, 5, 10, 5))
+    df = eq.query_time(datetime(2019, 12, 2, 22, 50), timedelta(minutes=120))
     t1 = time.time() - t0
 
     print('Time Elapsed %.2f' % t1)
+    df.to_pickle('191202_120min.pickle')
 
 
