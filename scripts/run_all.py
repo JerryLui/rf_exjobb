@@ -109,12 +109,12 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         ),
         # ICMP Detectors
         Detector(
-            name='ICMP_64_0.5',
+            name='ICMP_64_2',
             n_seeds=8,
             n_bins=64,
             features=['external'],
             filt=protocol_filter('ICMP'),
-            thresh=0.5,
+            thresh=2,
             flag_th=6,
             detection_rule='two_step'
         ),
@@ -129,12 +129,12 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             detection_rule='two_step'
         ),
         Detector(
-            name='ICMP_32_0.5',
+            name='ICMP_32_2',
             n_seeds=8,
             n_bins=32,
             features=['external'],
             filt=protocol_filter('ICMP'),
-            thresh=0.5,
+            thresh=2,
             flag_th=6,
             detection_rule='two_step'
         ),
@@ -150,12 +150,12 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         ),
         # UDP Detectors
         Detector(
-            name='UDP_0.5',
+            name='UDP_2',
             n_seeds=8,
             n_bins=128,
             features=['external'],
             filt=protocol_filter('UDP'),
-            thresh=0.5,
+            thresh=2,
             flag_th=6,
             detection_rule='two_step'
         ),
