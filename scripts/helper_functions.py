@@ -59,8 +59,9 @@ def protocol_filter(proto):
         frame = frame.copy()
         subframe = frame.loc[
                 frame.ip_protocol == proto
-                ] 
-        return subframe
+                ]
+        filtered = int_ext_filter(subframe)
+        return filtered
     return p_filter
 
 

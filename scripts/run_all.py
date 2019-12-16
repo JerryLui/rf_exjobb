@@ -106,6 +106,68 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             thresh=0.265,
             flag_th=6,
             detection_rule='two_step'
+        ),
+        # ICMP Detectors
+        Detector(
+            name='ICMP_64_2.5_sigma',
+            n_seeds=8,
+            n_bins=64,
+            features=['external'],
+            filt=protocol_filter('ICMP'),
+            thresh=0.166,
+            flag_th=6,
+            detection_rule='two_step'
+        ),
+        Detector(
+            name='ICMP_64_3_sigma',
+            n_seeds=8,
+            n_bins=64,
+            features=['external'],
+            filt=protocol_filter('ICMP'),
+            thresh=0.2,
+            flag_th=6,
+            detection_rule='two_step'
+        ),
+        Detector(
+            name='ICMP_32_2.5_sigma',
+            n_seeds=8,
+            n_bins=32,
+            features=['external'],
+            filt=protocol_filter('ICMP'),
+            thresh=0.166,
+            flag_th=6,
+            detection_rule='two_step'
+        ),
+        Detector(
+            name='ICMP_32_3_sigma',
+            n_seeds=8,
+            n_bins=32,
+            features=['external'],
+            filt=protocol_filter('ICMP'),
+            thresh=0.2,
+            flag_th=6,
+            detection_rule='two_step'
+        ),
+        # UDP Detectors
+        Detector(
+            name='UDP_2.5_sigma',
+            n_seeds=8,
+            n_bins=128,
+            features=['external'],
+            filt=protocol_filter('UDP'),
+            thresh=0.166,
+            flag_th=6,
+            detection_rule='two_step'
+        ),
+        Detector(
+            name='UDP_3_sigma',
+            n_seeds=8,
+            n_bins=128,
+            features=['external'],
+            filt=protocol_filter('UDP'),
+            thresh=0.2,
+            flag_th=6,
+            detection_rule='two_step'
         )
     ]
 
