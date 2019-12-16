@@ -109,63 +109,63 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         ),
         # ICMP Detectors
         Detector(
-            name='ICMP_64_2.5_sigma',
+            name='ICMP_64_0.5',
             n_seeds=8,
             n_bins=64,
             features=['external'],
             filt=protocol_filter('ICMP'),
-            thresh=0.166,
+            thresh=0.5,
             flag_th=6,
             detection_rule='two_step'
         ),
         Detector(
-            name='ICMP_64_3_sigma',
+            name='ICMP_64_1',
             n_seeds=8,
             n_bins=64,
             features=['external'],
             filt=protocol_filter('ICMP'),
-            thresh=0.2,
+            thresh=1,
             flag_th=6,
             detection_rule='two_step'
         ),
         Detector(
-            name='ICMP_32_2.5_sigma',
+            name='ICMP_32_0.5',
             n_seeds=8,
             n_bins=32,
             features=['external'],
             filt=protocol_filter('ICMP'),
-            thresh=0.166,
+            thresh=0.5,
             flag_th=6,
             detection_rule='two_step'
         ),
         Detector(
-            name='ICMP_32_3_sigma',
+            name='ICMP_32_1',
             n_seeds=8,
             n_bins=32,
             features=['external'],
             filt=protocol_filter('ICMP'),
-            thresh=0.2,
+            thresh=1,
             flag_th=6,
             detection_rule='two_step'
         ),
         # UDP Detectors
         Detector(
-            name='UDP_2.5_sigma',
+            name='UDP_0.5',
             n_seeds=8,
             n_bins=128,
             features=['external'],
             filt=protocol_filter('UDP'),
-            thresh=0.166,
+            thresh=0.5,
             flag_th=6,
             detection_rule='two_step'
         ),
         Detector(
-            name='UDP_3_sigma',
+            name='UDP_1',
             n_seeds=8,
             n_bins=128,
             features=['external'],
             filt=protocol_filter('UDP'),
-            thresh=0.2,
+            thresh=1,
             flag_th=6,
             detection_rule='two_step'
         )
@@ -190,8 +190,17 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     detections = []
     detection_frames = []
 
-    divs_detector = detectors[-1] #Only need the divs from one detector
+    divs_detector = detectors[0] #Only need the divs from one detector
     ext_divs = []
+
+    for d in detectors:
+        if d.name == 'UDP_1':
+            udp_detector = d
+        if d.name == 'ICMP_32_1':
+            icmp_detector = d
+
+    icmp_divs = []
+    udp_divs = []
 
     for i, future in enumerate(as_completed(futures)):
         results = dp.run_next_timestep(future.result())
@@ -205,6 +214,8 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             max_dets[detector.name].append(detector.get_max_det())
 
         ext_divs.append(divs_detector.get_divs())
+        icmp_divs.append(icmp_detector.get_divs())
+        udp_divs.append(udp_detector.get_divs())
 
     full_detections = pd.concat(detection_frames)
     window_size_fmt = int(window_size.total_seconds() / 60)
@@ -218,6 +229,10 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         pickle.dump(max_dets, fp, protocol=pickle.HIGHEST_PROTOCOL)
     with open('output/ext_divs_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size_fmt), 'wb') as fp:
         pickle.dump(ext_divs, fp, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('output/icmp_divs_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size_fmt), 'wb') as fp:
+        pickle.dump(icmp_divs, fp, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('output/udp_divs_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size_fmt), 'wb') as fp:
+        pickle.dump(udp_divs, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
