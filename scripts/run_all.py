@@ -43,7 +43,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
-            thresh=0.166,
+            thresh=0.194,
             flag_th=6,
             detection_rule='two_step'
         ),
@@ -53,7 +53,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
-            thresh=0.182,
+            thresh=0.214,
             flag_th=6,
             detection_rule='two_step'
         ),
@@ -63,7 +63,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
-            thresh=0.2,
+            thresh=0.233,
             flag_th=6,
             detection_rule='two_step'
         ),
@@ -73,7 +73,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
-            thresh=0.216,
+            thresh=0.252,
             flag_th=6,
             detection_rule='two_step'
         ),
@@ -83,7 +83,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
-            thresh=0.232,
+            thresh=0.272,
             flag_th=6,
             detection_rule='two_step'
         ),
@@ -93,7 +93,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
-            thresh=0.249,
+            thresh=0.291,
             flag_th=6,
             detection_rule='two_step'
         ),
@@ -103,10 +103,12 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
-            thresh=0.265,
+            thresh=0.311,
             flag_th=6,
             detection_rule='two_step'
-        ),
+        )
+    ]
+    '''
         # ICMP Detectors
         Detector(
             name='ICMP_64_2',
@@ -170,6 +172,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             detection_rule='two_step'
         )
     ]
+    '''
 
     name_list = []
     for detector in detectors:
@@ -193,14 +196,14 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     divs_detector = detectors[0] #Only need the divs from one detector
     ext_divs = []
 
-    for d in detectors:
-        if d.name == 'UDP_1':
-            udp_detector = d
-        if d.name == 'ICMP_32_1':
-            icmp_detector = d
+    #for d in detectors:
+    #    if d.name == 'UDP_1':
+    #        udp_detector = d
+    #    if d.name == 'ICMP_32_1':
+    #        icmp_detector = d
 
-    icmp_divs = []
-    udp_divs = []
+    #icmp_divs = []
+    #udp_divs = []
 
     for i, future in enumerate(as_completed(futures)):
         results = dp.run_next_timestep(future.result())
@@ -214,8 +217,8 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             max_dets[detector.name].append(detector.get_max_det())
 
         ext_divs.append(divs_detector.get_divs())
-        icmp_divs.append(icmp_detector.get_divs())
-        udp_divs.append(udp_detector.get_divs())
+        #icmp_divs.append(icmp_detector.get_divs())
+        #udp_divs.append(udp_detector.get_divs())
 
     full_detections = pd.concat(detection_frames)
     window_size_fmt = int(window_size.total_seconds() / 60)
@@ -229,10 +232,10 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         pickle.dump(max_dets, fp, protocol=pickle.HIGHEST_PROTOCOL)
     with open('output/ext_divs_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size_fmt), 'wb') as fp:
         pickle.dump(ext_divs, fp, protocol=pickle.HIGHEST_PROTOCOL)
-    with open('output/icmp_divs_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size_fmt), 'wb') as fp:
-        pickle.dump(icmp_divs, fp, protocol=pickle.HIGHEST_PROTOCOL)
-    with open('output/udp_divs_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size_fmt), 'wb') as fp:
-        pickle.dump(udp_divs, fp, protocol=pickle.HIGHEST_PROTOCOL)
+    #with open('output/icmp_divs_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size_fmt), 'wb') as fp:
+    #    pickle.dump(icmp_divs, fp, protocol=pickle.HIGHEST_PROTOCOL)
+    #with open('output/udp_divs_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size_fmt), 'wb') as fp:
+    #    pickle.dump(udp_divs, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
