@@ -27,6 +27,7 @@ class ElasticQuery(object):
         self.QUERY_SIZE = 10000
         self.es_index = es_index
         self.es_server = es_server
+        self.disk_path = '/media/jerry/RecordedFuture/Data'
 
         try:
             logger.debug('Initializing connection.')
@@ -99,17 +100,21 @@ class ElasticQuery(object):
             # (dates[0] - dates[1]).total_seconds()/(60*60*24)
         return dates[0], dates[1], total_hits
 
-    def query_time(self, start_time: datetime, window_size: timedelta):
+    def query_time(self, start_time: datetime, window_size: timedelta, from_disk: bool = True):
         """
         Queries ElasticSearch server starting at start_time
 
         :param start_time: datetime to start search at
         :param window_size: lookup window size in timedelta
+        :param from_disk: check if file exists on disk and load it
         :return: dataframe containing data in the time window if any
         """
         # Time parameters
         time_current = start_time
         time_change = window_size
+
+        if from_disk and os.path.exists(self._get_pp(time_current)):
+            return self.load_pickle(current_date, time_change)
 
         query = \
             {'query':
@@ -126,6 +131,7 @@ class ElasticQuery(object):
              }
 
         logger.debug('Querying time %s' % time_current.isoformat())
+
         return self._query_data(query)
 
     def query_ip(self, ip, start_time: datetime, end_time: datetime, src=True):
@@ -164,22 +170,28 @@ class ElasticQuery(object):
         logger.debug('Querying ip %s in time %s' % (ip, time_start.isoformat()))
         return self._query_data(query)
 
-    def load_pickle(self, current_date: datetime, window_size: timedelta):
+    def load_pickle(self, start_time: datetime, window_size: timedelta):
         """
         Load saved pickle files from disk instead of query.
         """
-        disk_path = '/media/jerry/RecordedFuture/Data'
         windows = int(window_size.total_seconds()/(60 * 5))     # Number of windows
 
         df_lst = []
         for _ in range(windows):
-            pickle_path = os.path.join(disk_path,
-                                       str(current_date.month),
-                                       str(current_date.day),
-                                       '%02d%02d.pickle' % (current_date.hour, current_date.minute))
-            df_lst.append(pd.read_pickle(pickle_path))
-            current_date += window_size
+            pp = self._get_pp(start_time)
+            df_lst.append(pd.read_pickle(pp))
+            start_time += window_size
         return pd.concat(df_lst, sort=False, ignore_index=True)
+
+    def _get_pp(self, current_date):
+        """
+        :return: pickle file path for given date
+        """
+        pickle_path = os.path.join(self.disk_path,
+                                   str(current_date.month),
+                                   str(current_date.day),
+                                   '%02d%02d.pickle' % (current_date.hour, current_date.minute))
+        return pickle_path
 
     def _query_data(self, query):
         """
