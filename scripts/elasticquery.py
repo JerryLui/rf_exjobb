@@ -9,6 +9,7 @@ from elasticsearch import Elasticsearch, exceptions
 import pandas as pd
 import numpy as np
 import logging
+import os
 
 
 # Logging
@@ -163,6 +164,23 @@ class ElasticQuery(object):
         logger.debug('Querying ip %s in time %s' % (ip, time_start.isoformat()))
         return self._query_data(query)
 
+    def load_pickle(self, current_date: datetime, window_size: timedelta):
+        """
+        Load saved pickle files from disk instead of query.
+        """
+        disk_path = '/media/jerry/RecordedFuture/Data'
+        windows = int(window_size.total_seconds()/(60 * 5))     # Number of windows
+
+        df_lst = []
+        for _ in range(windows):
+            pickle_path = os.path.join(disk_path,
+                                       str(current_date.month),
+                                       str(current_date.day),
+                                       '%02d%02d.pickle' % (current_date.hour, current_date.minute))
+            df_lst.append(pd.read_pickle(pickle_path))
+            current_date += window_size
+        return pd.concat(df_lst, sort=False, ignore_index=True)
+
     def _query_data(self, query):
         """
         Queries ElasticSearch server with given query body, saves result to file if a path is given
@@ -183,7 +201,7 @@ class ElasticQuery(object):
         lines_skipped = 0
         batches = int(np.ceil(n_flows/self.QUERY_SIZE))
         logger.debug('Processing %i flows.' % n_flows)
-        for batch in range(batches-1):
+        for batch in range(max(batches-1, 1)):
             rows = []
             for hit in response['hits']['hits']:
                 row = hit['_source'].get('flow', None)
@@ -251,13 +269,28 @@ if __name__ == '__main__':
     ul_logger = logging.getLogger('urllib3.connectionpool')
     ul_logger.propagate = False
 
-    t0 = time.time()
     eq = ElasticQuery(server, 'elastiflow-3.5.1-2019*', username, password)
-    # df = eq.query_ip('192.168.1.1/16', datetime(2019, 11, 5, 10, 0), datetime(2019, 11, 5, 10, 5))
-    df = eq.query_time(datetime(2019, 12, 2, 22, 50), timedelta(minutes=120))
-    t1 = time.time() - t0
+    # df1 = eq.query_ip('5.254.66.131', datetime(2019, 12, 6, 2, 30), datetime(2019, 12, 6, 3, 0))
+    # df2 = eq.query_ip('5.254.66.131', datetime(2019, 12, 6, 2, 30), datetime(2019, 12, 6, 3, 0), src=False)
+    # df = eq.query_time(datetime(2019, 12, 2, 0), timedelta(minutes=120))
 
-    print('Time Elapsed %.2f' % t1)
-    df.to_pickle('191202_120min.pickle')
+    disk_path = '/media/jerry/RecordedFuture/Data/'
+    current_date = datetime(2019, 12, 5, 0)
+    window = timedelta(minutes=5)
+    while current_date < datetime(2019, 12, 16):
+        print(current_date)
+        df = eq.query_time(current_date, window)
+
+        pickle_path = os.path.join(disk_path,
+                                   str(current_date.month),
+                                   str(current_date.day),
+                                   '%02d%02d.pickle' % (current_date.hour, current_date.minute))
+        if not os.path.exists(os.path.dirname(pickle_path)):
+            os.makedirs(os.path.dirname(pickle_path))
+        df.to_pickle(pickle_path)
+        current_date += window
+
+
+
 
 

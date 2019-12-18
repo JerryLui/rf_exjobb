@@ -122,7 +122,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     futures = []
     thread_pool = ThreadPoolExecutor(1)
     while current_time < end_time:
-        futures.append(thread_pool.submit(eq.query_time, current_time, window_size))
+        futures.append(thread_pool.submit(eq.load_pickle, current_time, window_size))
         current_time += window_size
 
     detections = []
