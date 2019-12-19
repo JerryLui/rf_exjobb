@@ -287,7 +287,7 @@ if __name__ == '__main__':
     # df = eq.query_time(datetime(2019, 12, 2, 0), timedelta(minutes=120))
 
     disk_path = '/media/jerry/RecordedFuture/Data/'
-    current_date = datetime(2019, 12, 5, 0)
+    current_date = datetime(2019, 12, 9, 0)
     window = timedelta(minutes=5)
     while current_date < datetime(2019, 12, 16):
         print(current_date)
