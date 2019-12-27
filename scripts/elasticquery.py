@@ -113,6 +113,7 @@ class ElasticQuery(object):
         time_current = start_time
         time_change = window_size
 
+        logger.debug('Querying time %s' % time_current.isoformat())
         if from_disk and os.path.exists(self._get_pp(time_current)):
             return self.load_pickle(current_date, time_change)
 
@@ -129,8 +130,6 @@ class ElasticQuery(object):
                        }
                   }
              }
-
-        logger.debug('Querying time %s' % time_current.isoformat())
 
         return self._query_data(query)
 
@@ -175,12 +174,14 @@ class ElasticQuery(object):
         Load saved pickle files from disk instead of query.
         """
         windows = int(window_size.total_seconds()/(60 * 5))     # Number of windows
+        file_window = timedelta(minutes=5)
 
+        logger.debug('Loading time %s ' % start_time.isoformat())
         df_lst = []
         for _ in range(windows):
             pp = self._get_pp(start_time)
             df_lst.append(pd.read_pickle(pp))
-            start_time += window_size
+            start_time += file_window
         return pd.concat(df_lst, sort=False, ignore_index=True)
 
     def _get_pp(self, current_date):

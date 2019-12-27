@@ -184,34 +184,20 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         max_dets[n] = []
 
     # Threading
-    futures = []
-    thread_pool = ThreadPoolExecutor(1)
-    while current_time < end_time:
-        futures.append(thread_pool.submit(eq.load_pickle, current_time, window_size))
-        current_time += window_size
-
     detections = []
     detection_frames = []
 
-    divs_detector = detectors[0] #Only need the divs from one detector
+    divs_detector = detectors[0]  # Only need the divs from one detector
     ext_divs = []
 
-    #for d in detectors:
-    #    if d.name == 'UDP_1':
-    #        udp_detector = d
-    #    if d.name == 'ICMP_32_1':
-    #        icmp_detector = d
+    while current_time < end_time:
+        df = eq.load_pickle(current_time, window_size)
+        current_time += window_size
 
-    #icmp_divs = []
-    #udp_divs = []
-
-    for i, future in enumerate(as_completed(futures)):
-        results = dp.run_next_timestep(future.result())
+        results = dp.run_next_timestep(df)
         detections.append(results[0])
         detection_frames.append(results[1])
         logger.debug(' '.join([str(len(_)) for _ in results]))
-
-        futures[i] = None
 
         for detector in detectors:
             max_dets[detector.name].append(detector.get_max_det())
@@ -240,9 +226,9 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
 
 if __name__ == '__main__':
     try:
-        window_size = timedelta(minutes=5)
+        window_size = timedelta(minutes=15)
         # Earliest 30 days before today
-        for i in [2, 3, 5, 6]:
+        for i in [3, 9, 10, 11, 12, 13, 14]:
             logger.debug('Starting run for day %i' % i)
             run(datetime(2019, 12, i, 0, 0), datetime(2019, 12, i+1, 0, 0), window_size)
     except Exception as e:
