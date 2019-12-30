@@ -17,6 +17,12 @@ logger = logging.getLogger('rf_exjobb')
 
 
 class ElasticQuery(object):
+    """
+    Class with pre-built ElasticSearch queries to download/query data
+    """
+    DISK_PATH = '/media/jerry/RecordedFuture/Data'
+    FILE_TIME_DELTA = timedelta(minutes=5)
+
     def __init__(self, es_server, es_index, username, password):
         """
         ElasticQuery object for querying dataframes from server
@@ -27,7 +33,6 @@ class ElasticQuery(object):
         self.QUERY_SIZE = 10000
         self.es_index = es_index
         self.es_server = es_server
-        self.disk_path = '/media/jerry/RecordedFuture/Data'
 
         try:
             logger.debug('Initializing connection.')
@@ -114,8 +119,13 @@ class ElasticQuery(object):
         time_change = window_size
 
         logger.debug('Querying time %s' % time_current.isoformat())
-        if from_disk and os.path.exists(self._get_pp(time_current)):
-            return self.load_pickle(current_date, time_change)
+        if from_disk:
+            if not os.path.exists(self._get_pp(time_current)):
+                while start_time < start_time + time_change:
+                    self.download_pickle(start_time)
+                    start_time += self.FILE_TIME_DELTA
+
+            return self.load_pickle(time_current, time_change)
 
         query = \
             {'query':
@@ -174,21 +184,29 @@ class ElasticQuery(object):
         Load saved pickle files from disk instead of query.
         """
         windows = int(window_size.total_seconds()/(60 * 5))     # Number of windows
-        file_window = timedelta(minutes=5)
 
         logger.debug('Loading time %s ' % start_time.isoformat())
         df_lst = []
         for _ in range(windows):
             pp = self._get_pp(start_time)
             df_lst.append(pd.read_pickle(pp))
-            start_time += file_window
+            start_time += self.FILE_TIME_DELTA
         return pd.concat(df_lst, sort=False, ignore_index=True)
+
+    def download_pickle(self, start_time: datetime):
+        logger.debug('Downloading %s ' % start_time.isoformat())
+
+        df = eq.query_time(start_time, self.FILE_TIME_DELTA, from_disk=False)
+        pp = self._get_pp(start_time)
+        if not os.path.exists(os.path.dirname(pp))
+            os.makedirs(os.path.dirname(pp))
+        df.to_pickle(pp)
 
     def _get_pp(self, current_date):
         """
         :return: pickle file path for given date
         """
-        pickle_path = os.path.join(self.disk_path,
+        pickle_path = os.path.join(self.DISK_PATH,
                                    str(current_date.month),
                                    str(current_date.day),
                                    '%02d%02d.pickle' % (current_date.hour, current_date.minute))
@@ -286,24 +304,5 @@ if __name__ == '__main__':
     # df1 = eq.query_ip('5.254.66.131', datetime(2019, 12, 6, 2, 30), datetime(2019, 12, 6, 3, 0))
     # df2 = eq.query_ip('5.254.66.131', datetime(2019, 12, 6, 2, 30), datetime(2019, 12, 6, 3, 0), src=False)
     # df = eq.query_time(datetime(2019, 12, 2, 0), timedelta(minutes=120))
-
-    disk_path = '/media/jerry/RecordedFuture/Data/'
-    current_date = datetime(2019, 12, 14, 22, 10)
-    window = timedelta(minutes=5)
-    while current_date < datetime(2019, 12, 15, 0, 0):
-        print(current_date)
-        df = eq.query_time(current_date, window, from_disk=False)
-
-        pickle_path = os.path.join(disk_path,
-                                   str(current_date.month),
-                                   str(current_date.day),
-                                   '%02d%02d.pickle' % (current_date.hour, current_date.minute))
-        if not os.path.exists(os.path.dirname(pickle_path)):
-            os.makedirs(os.path.dirname(pickle_path))
-        df.to_pickle(pickle_path)
-        current_date += window
-
-
-
 
 
