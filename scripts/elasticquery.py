@@ -288,11 +288,11 @@ if __name__ == '__main__':
     # df = eq.query_time(datetime(2019, 12, 2, 0), timedelta(minutes=120))
 
     disk_path = '/media/jerry/RecordedFuture/Data/'
-    current_date = datetime(2019, 12, 9, 0)
+    current_date = datetime(2019, 12, 14, 22, 10)
     window = timedelta(minutes=5)
-    while current_date < datetime(2019, 12, 16):
+    while current_date < datetime(2019, 12, 15, 0, 0):
         print(current_date)
-        df = eq.query_time(current_date, window)
+        df = eq.query_time(current_date, window, from_disk=False)
 
         pickle_path = os.path.join(disk_path,
                                    str(current_date.month),

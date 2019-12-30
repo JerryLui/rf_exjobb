@@ -228,7 +228,7 @@ if __name__ == '__main__':
     try:
         window_size = timedelta(minutes=15)
         # Earliest 30 days before today
-        for i in [3, 9, 10, 11, 12, 13, 14]:
+        for i in [14]:
             logger.debug('Starting run for day %i' % i)
             run(datetime(2019, 12, i, 0, 0), datetime(2019, 12, i+1, 0, 0), window_size)
     except Exception as e:
