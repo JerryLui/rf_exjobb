@@ -238,15 +238,15 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     with open('output/ext_divs_{}-{}_{}.pkl'.format(start_time.day, start_time.month, window_size_fmt), 'wb') as fp:
         pickle.dump(ext_divs, fp, protocol=pickle.HIGHEST_PROTOCOL)
     for det in detectors:
-        with open('output/divs_{}_{}-{}_{}.pkl'.format(det.name, start_time.day, start_time.month, window_size_fmt, 'wb')) as fp:
+        with open('output/divs_{}_{}-{}_{}.pkl'.format(det.name, start_time.day, start_time.month, window_size_fmt), 'wb') as fp:
             pickle.dump(all_divs[det.name], fp, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == '__main__':
     try:
-        window_size = timedelta(minutes=15)
+        window_size = timedelta(minutes=5)
         # Earliest 30 days before today
-        for i in [2, 3, 5, 6, 9, 10, 11, 12, 13, 14]:
+        for i in [2, 3, 5, 6, 9, 10, 11, 12, 13]:
             logger.debug('Starting run for day %i' % i)
             run(datetime(2019, 12, i, 0, 0), datetime(2019, 12, i+1, 0, 0), window_size)
     except Exception as e:

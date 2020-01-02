@@ -198,7 +198,7 @@ class ElasticQuery(object):
 
         df = eq.query_time(start_time, self.FILE_TIME_DELTA, from_disk=False)
         pp = self._get_pp(start_time)
-        if not os.path.exists(os.path.dirname(pp))
+        if not os.path.exists(os.path.dirname(pp)):
             os.makedirs(os.path.dirname(pp))
         df.to_pickle(pp)
 
