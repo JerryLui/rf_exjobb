@@ -116,6 +116,72 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     detectors = [
         # ICMP Detectors
         Detector(
+            name='ICMP_128_3',
+            n_seeds=8,
+            n_bins=128,
+            features=['external'],
+            filt=protocol_filter('ICMP'),
+            thresh=1.17,
+            flag_th=6,
+            detection_rule='two_step'
+        ),
+        Detector(
+            name='ICMP_64_3',
+            n_seeds=8,
+            n_bins=64,
+            features=['external'],
+            filt=protocol_filter('ICMP'),
+            thresh=1.08,
+            flag_th=6,
+            detection_rule='two_step'
+        ),
+        # UDP Detectors
+        Detector(
+            name='UDP_128_3',
+            n_seeds=8,
+            n_bins=128,
+            features=['external'],
+            filt=protocol_filter('UDP'),
+            thresh=0.6,
+            flag_th=6,
+            detection_rule='two_step'
+        ),
+        Detector(
+            name='UDP_128_4',
+            n_seeds=8,
+            n_bins=128,
+            features=['external'],
+            filt=protocol_filter('UDP'),
+            thresh=0.8,
+            flag_th=6,
+            detection_rule='two_step'
+        ),
+        Detector(
+            name='UDP_256_3',
+            n_seeds=8,
+            n_bins=256,
+            features=['external'],
+            filt=protocol_filter('UDP'),
+            thresh=0.6,
+            flag_th=6,
+            detection_rule='two_step'
+        ),
+        Detector(
+            name='UDP_256_4',
+            n_seeds=8,
+            n_bins=256,
+            features=['external'],
+            filt=protocol_filter('UDP'),
+            thresh=0.8,
+            flag_th=6,
+            detection_rule='two_step'
+        ),
+    ]
+
+    '''
+    detectors = [
+        # ICMP Detectors
+        Detector(
             name='ICMP_32',
             n_seeds=8,
             n_bins=32,
@@ -197,6 +263,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             detection_rule='two_step'
         )
     ]
+    '''
 
     name_list = []
     all_divs = {}
