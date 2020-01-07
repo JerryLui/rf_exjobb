@@ -58,16 +58,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             flag_th=6,
             detection_rule='two_step'
         ),
-        Detector(
-            name='3_sigma',
-            n_seeds=8,
-            n_bins=1024,
-            features=['external'],
-            filt=int_ext_filter,
-            thresh=0.233,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
+        
         Detector(
             name='3.25_sigma',
             n_seeds=8,
@@ -109,12 +100,8 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             detection_rule='two_step'
         )
     ]
-    '''
 
-    THRESH = 20
-
-    detectors = [
-        # ICMP Detectors
+# ICMP Detectors
         Detector(
             name='ICMP_128_3',
             n_seeds=8,
@@ -135,47 +122,72 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             flag_th=6,
             detection_rule='two_step'
         ),
-        # UDP Detectors
+
+    '''
+
+    THRESH = 20
+
+    detectors = [
         Detector(
-            name='UDP_128_3',
+            name='ext_3_sigma',
             n_seeds=8,
-            n_bins=128,
+            n_bins=1024,
             features=['external'],
-            filt=protocol_filter('UDP'),
-            thresh=0.6,
+            filt=int_ext_filter,
+            thresh=THRESH,
             flag_th=6,
             detection_rule='two_step'
         ),
         Detector(
-            name='UDP_128_4',
+            name='int_3_sigma',
             n_seeds=8,
-            n_bins=128,
-            features=['external'],
-            filt=protocol_filter('UDP'),
-            thresh=0.8,
+            n_bins=1024,
+            features=['internal'],
+            filt=int_ext_filter,
+            thresh=THRESH,
             flag_th=6,
             detection_rule='two_step'
         ),
         Detector(
-            name='UDP_256_3',
+            name='src_3_simga',
             n_seeds=8,
-            n_bins=256,
-            features=['external'],
-            filt=protocol_filter('UDP'),
-            thresh=0.6,
+            n_bins=1024,
+            features=['src_addr'],
+            filt=int_ext_filter,
+            thresh=THRESH,
             flag_th=6,
             detection_rule='two_step'
         ),
         Detector(
-            name='UDP_256_4',
+            name='dst_3_simga',
             n_seeds=8,
-            n_bins=256,
-            features=['external'],
-            filt=protocol_filter('UDP'),
-            thresh=0.8,
+            n_bins=1024,
+            features=['dst_addr'],
+            filt=int_ext_filter,
+            thresh=THRESH,
             flag_th=6,
             detection_rule='two_step'
         ),
+        Detector(
+            name='sport_3_simga',
+            n_seeds=8,
+            n_bins=1024,
+            features=['src_port'],
+            filt=int_ext_filter,
+            thresh=THRESH,
+            flag_th=6,
+            detection_rule='two_step'
+        ),
+        Detector(
+            name='dport_3_simga',
+            n_seeds=8,
+            n_bins=1024,
+            features=['dst_port'],
+            filt=int_ext_filter,
+            thresh=THRESH,
+            flag_th=6,
+            detection_rule='two_step'
+        )
     ]
 
     '''
