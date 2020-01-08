@@ -134,7 +134,7 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
-            thresh=THRESH,
+            thresh=0.27,
             flag_th=6,
             detection_rule='two_step'
         ),
@@ -144,47 +144,27 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
             n_bins=1024,
             features=['internal'],
             filt=int_ext_filter,
-            thresh=THRESH,
+            thresh=0.33,
             flag_th=6,
             detection_rule='two_step'
         ),
         Detector(
-            name='src_3_simga',
+            name='src_3_sigma',
             n_seeds=8,
             n_bins=1024,
             features=['src_addr'],
-            filt=int_ext_filter,
-            thresh=THRESH,
+            filt=None,
+            thresh=0.24,
             flag_th=6,
             detection_rule='two_step'
         ),
         Detector(
-            name='dst_3_simga',
+            name='dst_3_sigma',
             n_seeds=8,
             n_bins=1024,
             features=['dst_addr'],
-            filt=int_ext_filter,
-            thresh=THRESH,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        Detector(
-            name='sport_3_simga',
-            n_seeds=8,
-            n_bins=1024,
-            features=['src_port'],
-            filt=int_ext_filter,
-            thresh=THRESH,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        Detector(
-            name='dport_3_simga',
-            n_seeds=8,
-            n_bins=1024,
-            features=['dst_port'],
-            filt=int_ext_filter,
-            thresh=THRESH,
+            filt=None,
+            thresh=0.24,
             flag_th=6,
             detection_rule='two_step'
         )
