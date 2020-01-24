@@ -36,97 +36,6 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     eq = ElasticQuery(server, index, username, password)
     dp = DetectorPool()
 
-    '''
-    detectors = [
-        Detector(
-            name='2.5_sigma',
-            n_seeds=8,
-            n_bins=1024,
-            features=['external'],
-            filt=int_ext_filter,
-            thresh=0.194,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        Detector(
-            name='2.75_sigma',
-            n_seeds=8,
-            n_bins=1024,
-            features=['external'],
-            filt=int_ext_filter,
-            thresh=0.214,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        
-        Detector(
-            name='3.25_sigma',
-            n_seeds=8,
-            n_bins=1024,
-            features=['external'],
-            filt=int_ext_filter,
-            thresh=0.252,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        Detector(
-            name='3.5_sigma',
-            n_seeds=8,
-            n_bins=1024,
-            features=['external'],
-            filt=int_ext_filter,
-            thresh=0.272,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        Detector(
-            name='3.75_sigma',
-            n_seeds=8,
-            n_bins=1024,
-            features=['external'],
-            filt=int_ext_filter,
-            thresh=0.291,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        Detector(
-            name='4_sigma',
-            n_seeds=8,
-            n_bins=1024,
-            features=['external'],
-            filt=int_ext_filter,
-            thresh=0.311,
-            flag_th=6,
-            detection_rule='two_step'
-        )
-    ]
-
-# ICMP Detectors
-        Detector(
-            name='ICMP_128_3',
-            n_seeds=8,
-            n_bins=128,
-            features=['external'],
-            filt=protocol_filter('ICMP'),
-            thresh=1.17,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        Detector(
-            name='ICMP_64_3',
-            n_seeds=8,
-            n_bins=64,
-            features=['external'],
-            filt=protocol_filter('ICMP'),
-            thresh=1.08,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-
-    '''
-
-    THRESH = 20
-
     detectors = [
         Detector(
             name='ext_4_sigma',
@@ -170,95 +79,10 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
         )
     ]
 
-    '''
-    detectors = [
-        # ICMP Detectors
-        Detector(
-            name='ICMP_32',
-            n_seeds=8,
-            n_bins=32,
-            features=['external'],
-            filt=protocol_filter('ICMP'),
-            thresh=THRESH,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        Detector(
-            name='ICMP_64',
-            n_seeds=8,
-            n_bins=64,
-            features=['external'],
-            filt=protocol_filter('ICMP'),
-            thresh=THRESH,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        Detector(
-            name='ICMP_128',
-            n_seeds=8,
-            n_bins=128,
-            features=['external'],
-            filt=protocol_filter('ICMP'),
-            thresh=THRESH,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        Detector(
-            name='UDP_32',
-            n_seeds=8,
-            n_bins=32,
-            features=['external'],
-            filt=protocol_filter('UDP'),
-            thresh=THRESH,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        # UDP Detectors
-        Detector(
-            name='UDP_64',
-            n_seeds=8,
-            n_bins=64,
-            features=['external'],
-            filt=protocol_filter('UDP'),
-            thresh=THRESH,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        Detector(
-            name='UDP_128',
-            n_seeds=8,
-            n_bins=128,
-            features=['external'],
-            filt=protocol_filter('UDP'),
-            thresh=THRESH,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        Detector(
-            name='UDP_256',
-            n_seeds=8,
-            n_bins=256,
-            features=['external'],
-            filt=protocol_filter('UDP'),
-            thresh=THRESH,
-            flag_th=6,
-            detection_rule='two_step'
-        ),
-        Detector(
-            name='UDP_512',
-            n_seeds=8,
-            n_bins=512,
-            features=['external'],
-            filt=protocol_filter('UDP'),
-            thresh=THRESH,
-            flag_th=6,
-            detection_rule='two_step'
-        )
-    ]
-    '''
-
     name_list = []
     all_divs = {}
+
+    # Add all detectors to detection pool for concurrency
     for detector in detectors:
         dp.add_detector(detector)
         name_list.append(detector.name)
@@ -271,12 +95,16 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
     divs_detector = detectors[0]  # Only need the divs from one detector
     ext_divs = []
 
+    # Main Operation Loop
     while current_time < end_time:
-        df = eq.load_pickle(current_time, window_size)
+        # Load the data from local drive/ElasticSearch
+        df = eq.query_time(current_time, window_size)
         current_time += window_size
 
+        # Run detectors
         results = dp.run_next_timestep(df)
 
+        # Result processing
         detections.append(results[0])
         detection_frames.append(results[1])
         logger.debug(' '.join([str(len(_)) for _ in results]))
