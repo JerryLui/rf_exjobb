@@ -1,10 +1,17 @@
 # Master Thesis: Finding a Needle in a Stack of Logs
 
-This is our implementation of Brauckhoff et. als article Anomaly extraction in backbone networks using association rules. The main function is run_all.py
+This is our implementation of Brauckhoff et. als article Anomaly extraction in backbone networks using association rules. The main function is __run_all.py__
 
-The two main files used are 
-- __detector.py__: Main part of algorithm used to process data
-- __elasticquery.py__: Used to fetch data from ElasticSearch server
-- __run_all.py__: Runs our program
+The two main modules used are 
+- __detector.py__: Main part of algorithm used to process data for anomalies
+- __elasticquery.py__: Used to fetch data from ElasticSearch server or load file from disk
+- __run_all.py__: Runs whole program and extracts data
 
-A config file has to be created with username and password to the ElasticSearch server for usage.
+A config file __settings.py__ has to be created with username and password to the ElasticSearch server for usage as follows.
+
+```python
+server = 'https://es-elk-syslog.etc.com:1982'
+index = 'index*'
+username = 'username'
+password = 'password'
+```

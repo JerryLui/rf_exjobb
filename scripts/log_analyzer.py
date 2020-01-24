@@ -1,3 +1,12 @@
+"""
+Log analyzer for logs generated from elasticquery.py and detector.py.
+Run with log file path as input
+
+ex.
+python3 log_analyzer logs/l301209.log
+
+@Author Jerry Liu jerry.liu@recordedfuture.com
+"""
 from datetime import datetime
 import numpy as np
 
