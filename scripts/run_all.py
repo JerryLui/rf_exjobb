@@ -129,42 +129,42 @@ def run(start_time: datetime, end_time: datetime, window_size: timedelta):
 
     detectors = [
         Detector(
-            name='ext_3_sigma',
+            name='ext_4_sigma',
             n_seeds=8,
             n_bins=1024,
             features=['external'],
             filt=int_ext_filter,
-            thresh=0.27,
+            thresh=0.36,
             flag_th=6,
             detection_rule='two_step'
         ),
         Detector(
-            name='int_3_sigma',
+            name='int_4_sigma',
             n_seeds=8,
             n_bins=1024,
             features=['internal'],
             filt=int_ext_filter,
-            thresh=0.33,
+            thresh=0.44,
             flag_th=6,
             detection_rule='two_step'
         ),
         Detector(
-            name='src_3_sigma',
+            name='src_4_sigma',
             n_seeds=8,
             n_bins=1024,
             features=['src_addr'],
             filt=None,
-            thresh=0.24,
+            thresh=0.32,
             flag_th=6,
             detection_rule='two_step'
         ),
         Detector(
-            name='dst_3_sigma',
+            name='dst_4_sigma',
             n_seeds=8,
             n_bins=1024,
             features=['dst_addr'],
             filt=None,
-            thresh=0.24,
+            thresh=0.32,
             flag_th=6,
             detection_rule='two_step'
         )
@@ -305,7 +305,7 @@ if __name__ == '__main__':
     try:
         window_size = timedelta(minutes=5)
         # Earliest 30 days before today
-        for i in [2, 3, 5, 6, 9, 10, 11, 12, 13]:
+        for i in [9, 10, 11, 12, 13]:
             logger.debug('Starting run for day %i' % i)
             run(datetime(2019, 12, i, 0, 0), datetime(2019, 12, i+1, 0, 0), window_size)
     except Exception as e:

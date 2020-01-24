@@ -1,6 +1,6 @@
 """
-Download data from Elastic Search server.
-Requires: settings.py with server, username and password parameters
+Used for downloading data from Elastic Search server
+Requires: settings.py file with server address, username and password parameters
 
 @Author Jerry Liu jerry.liu@recordedfuture.com
 """
@@ -18,14 +18,18 @@ logger = logging.getLogger('rf_exjobb')
 
 class ElasticQuery(object):
     """
-    Class with pre-built ElasticSearch queries to download/query data
+    Class with pre-built ElasticSearch queries to download/query data from server or local
     """
+
+    # File path for storing data pickles
     DISK_PATH = '/media/jerry/RecordedFuture/Data'
+
+    # Minimum file window size
     FILE_TIME_DELTA = timedelta(minutes=5)
 
     def __init__(self, es_server, es_index, username, password):
         """
-        ElasticQuery object for querying dataframes from server
+        Initiates class by signing authenticating on es_server with username and password
 
         :param es_server: es server addr
         :param index: es index on server
@@ -42,22 +46,23 @@ class ElasticQuery(object):
             raise e
         logger.debug('Connection established.')
 
-        # Columns of interest
+        # Features of interest from the Netflow ElasticSearch
         self.col_time = ['timestamp']
         self.col_flow = ['src_addr', 'src_port', 'dst_addr', 'dst_port', 'ip_protocol', 'packets', 'bytes']
         self.col_node = ['ipaddr']
         self.columns = self.col_time + self.col_flow + self.col_node
 
+        # Construct actual feature name for extraction from ElasitcSearch
         self.response_columns = ['hits.hits._source.flow.' + _ for _ in self.col_flow] + \
                                 ['hits.hits._source.node.' + _ for _ in self.col_node]
         self.response_filter = ['_scroll_id', 'hits.total.value', 'hits.hits._source.@timestamp'] + self.response_columns
 
     def query_unique(self, field):
         """
-        Queries ElasticSearch for all unique entries in given field
+        Finds number of unique feature values for given field from ElasticSearch
 
         :param field: field following 'hits.hits._source' [examples: flow.ip_protocol, node.hostname]
-        :return:
+        :return: dataframe
         """
         query = \
             {
@@ -81,6 +86,8 @@ class ElasticQuery(object):
 
     def get_first_last(self):
         """
+        Query ElasticSearch for the first and last timestamp of the records in current index
+
         :return: (date_last, date_first, total_hits)
         """
         dates = []
@@ -111,7 +118,7 @@ class ElasticQuery(object):
 
         :param start_time: datetime to start search at
         :param window_size: lookup window size in timedelta
-        :param from_disk: check if file exists on disk and load it
+        :param from_disk: check if file exists on disk and load it else download the file
         :return: dataframe containing data in the time window if any
         """
         # Time parameters
@@ -119,6 +126,7 @@ class ElasticQuery(object):
         time_change = window_size
 
         logger.debug('Querying time %s' % time_current.isoformat())
+        # Try loading from disk if file(s) is available, else download file(s) to disk and load it
         if from_disk:
             if not os.path.exists(self._get_pp(time_current)):
                 while start_time < start_time + time_change:
@@ -194,6 +202,11 @@ class ElasticQuery(object):
         return pd.concat(df_lst, sort=False, ignore_index=True)
 
     def download_pickle(self, start_time: datetime):
+        """
+        Download pickle file recursively by calling query_time and save the results
+
+        :param start_time:
+        """
         logger.debug('Downloading %s ' % start_time.isoformat())
 
         df = eq.query_time(start_time, self.FILE_TIME_DELTA, from_disk=False)
@@ -217,7 +230,7 @@ class ElasticQuery(object):
         Queries ElasticSearch server with given query body, saves result to file if a path is given
 
         :param query: query body given to elastic search
-        :return: results as a dataframe
+        :return: dataframe
         """
         df_lst = []
         df_tmp = pd.DataFrame(columns=self.columns)
@@ -301,7 +314,7 @@ if __name__ == '__main__':
     ul_logger.propagate = False
 
     eq = ElasticQuery(server, 'elastiflow-3.5.1-2019*', username, password)
-    # df1 = eq.query_ip('5.254.66.131', datetime(2019, 12, 6, 2, 30), datetime(2019, 12, 6, 3, 0))
+
     # df2 = eq.query_ip('5.254.66.131', datetime(2019, 12, 6, 2, 30), datetime(2019, 12, 6, 3, 0), src=False)
     # df = eq.query_time(datetime(2019, 12, 2, 0), timedelta(minutes=120))
 
